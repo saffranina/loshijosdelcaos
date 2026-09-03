@@ -2,7 +2,7 @@
 // va debajo del portrait y elige qué retrato toca según lo que quede puesto.
 
 
-import { C } from '../theme.js';
+import { C, F } from '../theme.js';
 import { GameState, GARMENTS, GARMENT_ES } from './GameState.js';
 
 export class ClothingManager {
@@ -18,8 +18,14 @@ export class ClothingManager {
     this.portrait = opts.portrait || null;
 
     this.g = scene.add.graphics().setDepth(60);
-    // Sin texto debajo del medidor: los rectangulitos ya dicen cuánta ropa
-    // queda, y el número escrito sobraba.
+
+    // El número debajo de los cuadraditos: cuántas prendas quedan puestas
+    // sobre el total. Empieza en 3/3 y baja. Los cuadraditos solos se leen
+    // de un vistazo pero hay que contarlos, y en plena partida —con la vista
+    // en los dados— es justo lo que uno no quiere hacer.
+    this.label = scene.add.text(this.x, this.y + 13, '', {
+      fontFamily: F.body, fontSize: F.sizeSmall, color: C.textDim,
+    }).setOrigin(0.5, 0).setDepth(60);
 
     this.refresh();
   }
@@ -38,6 +44,8 @@ export class ClothingManager {
       g.fillStyle(on ? C.cloth : C.clothLost, on ? 0.9 : 0.55);
       g.fillRoundedRect(x0 + i * (pw + gap), this.y, pw, ph, 2);
     }
+
+    this.label.setText(`${remaining}/${GARMENTS.length}`);
 
     if (this.portrait?.setClothingStage) {
       this.portrait.setClothingStage(GameState.clothingStage(this.who));
@@ -59,5 +67,5 @@ export class ClothingManager {
     });
   }
 
-  destroy() { this.g.destroy(); }
+  destroy() { this.g.destroy(); this.label.destroy(); }
 }
