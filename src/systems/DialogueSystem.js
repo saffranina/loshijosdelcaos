@@ -18,6 +18,7 @@
 // saben ni les importa que esto sea HTML.
 
 import { C, F, SPEAKERS } from '../theme.js';
+import { tecla } from './Sfx.js';
 
 const CHAR_MS = 18;        // velocidad del typewriter
 const CHAR_MS_FAST = 10;   // para líneas largas
@@ -220,6 +221,9 @@ export class DialogueSystem {
       callback: () => {
         i++;
         this.bodyEl.textContent = this._full.slice(0, i);
+        // Una de cada dos letras, y nunca en los espacios: con una por letra
+        // el repiqueteo se vuelve un zumbido continuo.
+        if (i % 2 === 0 && this._full[i - 1] !== ' ') tecla();
         if (i >= this._full.length) this._finishTyping();
       },
     });
