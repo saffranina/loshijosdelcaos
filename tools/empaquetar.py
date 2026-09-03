@@ -266,15 +266,15 @@ PLANTILLA = u"""<!DOCTYPE html>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Los hijos del caos: El último dado</title>
-  <link href="./vendor/fonts/fuentes.css" rel="stylesheet">
+  <link href="./offline/fuentes.css" rel="stylesheet">
   <style>
 %(estilos)s  </style>
 </head>
 <body>
   <div id="game"></div>
   <script src="./vendor/phaser.min.js"></script>
-  <script src="./datos.js"></script>
-  <script src="./juego.js"></script>
+  <script src="./offline/datos.js"></script>
+  <script src="./offline/juego.js"></script>
 </body>
 </html>
 """
@@ -325,8 +325,7 @@ LA CARPETA
 
   Jugar.html    el juego
   assets/       el arte y la música
-  juego.js      el código
-  datos.js      los diálogos
+  offline/      el código y los diálogos
   vendor/       el motor (Phaser) y las tipografías
 
   Hay que dejar todo junto: si se mueve Jugar.html a otra carpeta sin el
@@ -336,14 +335,20 @@ LA CARPETA
 
 # -------------------------------------------------------------------- armado
 
-def main():
-    salida_dir = os.path.join(RAIZ, 'dist', NOMBRE)
-    if os.path.exists(salida_dir):
-        shutil.rmtree(salida_dir)
-    os.makedirs(salida_dir)
+def generar_en_el_repo():
+    """Deja el juego jugable dentro del propio repositorio.
 
+    Sirve para poder bajarse el juego desde GitHub y jugarlo sin más: el zip
+    que da el boton "Download ZIP" ya trae todo junto y con doble clic en
+    Jugar.html arranca. Por eso estos cuatro archivos SI se suben al repo,
+    aunque sean generados: son el precio de que se pueda bajar desde el
+    telefono, y pesan 150 KB, no los 74 MB de duplicar los assets.
+
+    Jugar.html va en la raiz porque desde ahi ve assets/ y vendor/, que es
+    donde el juego los busca.
+    """
     def escribir(rel, texto):
-        ruta = os.path.join(salida_dir, rel.replace('/', os.sep))
+        ruta = os.path.join(RAIZ, rel.replace('/', os.sep))
         carpeta = os.path.dirname(ruta)
         if carpeta and not os.path.isdir(carpeta):
             os.makedirs(carpeta)
@@ -351,20 +356,37 @@ def main():
             f.write(texto)
 
     bundle, orden = unir()
-    escribir('juego.js', bundle)
-    escribir('datos.js', datos_js())
+    escribir('offline/juego.js', bundle)
+    escribir('offline/datos.js', datos_js())
+    escribir('offline/fuentes.css', css_con_fuentes())
     escribir('Jugar.html', html_offline())
     escribir('LEEME.txt', LEEME)
-    escribir('vendor/fonts/fuentes.css', css_con_fuentes())
+    return orden
 
-    shutil.copy2(os.path.join(RAIZ, 'vendor', 'phaser.min.js'),
-                 os.path.join(salida_dir, 'vendor', 'phaser.min.js'))
-    shutil.copytree(os.path.join(RAIZ, 'assets'),
-                    os.path.join(salida_dir, 'assets'))
 
-    print('  %d modulos unidos en juego.js' % len(orden))
+# Lo que necesita el juego para andar. El resto del repo (src/, tests/,
+# tools/, los .md) no hace falta para jugar, y en el paquete que se regala
+# solo seria ruido.
+DEL_PAQUETE = ['Jugar.html', 'LEEME.txt', 'offline', 'vendor', 'assets']
 
-    # El zip: lo que se manda por WeTransfer, Drive o lo que sea.
+
+def main():
+    orden = generar_en_el_repo()
+    print('  %d modulos unidos en offline/juego.js' % len(orden))
+
+    salida_dir = os.path.join(RAIZ, 'dist', NOMBRE)
+    if os.path.exists(salida_dir):
+        shutil.rmtree(salida_dir)
+    os.makedirs(salida_dir)
+
+    for nombre in DEL_PAQUETE:
+        origen = os.path.join(RAIZ, nombre)
+        destino = os.path.join(salida_dir, nombre)
+        if os.path.isdir(origen):
+            shutil.copytree(origen, destino)
+        else:
+            shutil.copy2(origen, destino)
+
     zip_ruta = os.path.join(RAIZ, 'dist',
                             NOMBRE.replace(' - ', '-').replace(' ', '-') + '.zip')
     if os.path.exists(zip_ruta):
@@ -378,10 +400,11 @@ def main():
 
     mb = os.path.getsize(zip_ruta) / (1024.0 * 1024.0)
     print()
-    print('  Carpeta:  dist/%s/' % NOMBRE)
-    print('  Zip:      dist/%s  (%.0f MB)' % (os.path.basename(zip_ruta), mb))
+    print('  En el repo:  Jugar.html + offline/  (para subir a GitHub)')
+    print('  Carpeta:     dist/%s/' % NOMBRE)
+    print('  Zip:         dist/%s  (%.0f MB)' % (os.path.basename(zip_ruta), mb))
     print()
-    print('  Para probarlo: doble clic en Jugar.html dentro de la carpeta.')
+    print('  Para probarlo: doble clic en Jugar.html.')
     print()
     return 0
 

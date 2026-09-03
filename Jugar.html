@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Los hijos del caos: El último dado</title>
+  <link href="./offline/fuentes.css" rel="stylesheet">
+  <style>
+    :root { color-scheme: dark; }
+    html, body {
+      margin: 0; padding: 0; min-height: 100%;
+      background: #0a0708;
+      background-image: radial-gradient(ellipse at 50% 40%, #1a1013 0%, #0a0708 70%);
+      color: #c9b8a8;
+      font-family: 'Spectral', Georgia, serif;
+      display: flex; flex-direction: column;
+    }
+    /* El canvas mide 800x600 píxeles reales. Se muestra a ese mismo tamaño,
+       SIEMPRE: cualquier escala fraccionaria (estirar 800px sobre 746,66)
+       deja el texto entre píxeles y se ve borroso. Si la ventana es más
+       chica preferimos que la página se pueda desplazar antes que perder
+       nitidez. */
+    #game {
+      width: 800px;
+      height: 600px;
+      flex: none;
+      /* El cuadro de diálogo es una capa HTML encima del canvas (ver
+         DialogueSystem.js), y se posiciona respecto de este contenedor. */
+      position: relative;
+      /* margin:auto centra igual que justify-content, pero si la ventana es
+         más chica que 800x600 el desborde sigue siendo alcanzable con scroll
+         en vez de quedar cortado a la izquierda. */
+      margin: auto;
+      box-shadow: 0 0 0 1px #3a2a28, 0 24px 70px rgba(0,0,0,.8);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    #game canvas { display: block; }
+  </style>
+</head>
+<body>
+  <div id="game"></div>
+  <script src="./vendor/phaser.min.js"></script>
+  <script src="./offline/datos.js"></script>
+  <script src="./offline/juego.js"></script>
+</body>
+</html>

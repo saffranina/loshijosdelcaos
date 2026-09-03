@@ -1,0 +1,40 @@
+LOS HIJOS DEL CAOS: EL ÚLTIMO DADO
+==================================
+
+CÓMO JUGAR
+
+  Doble clic en:  Jugar.html
+
+  Se abre en el navegador y ya está. No hace falta internet ni instalar
+  nada. Si el doble clic abre un editor de texto en vez del navegador,
+  clic derecho sobre el archivo -> Abrir con -> Chrome (o Firefox).
+
+  Se recomienda Chrome o Firefox.
+
+
+ANTES DE EMPEZAR
+
+  El juego tiene contenido sexual explícito. Es para mayores de edad.
+
+
+CÓMO SE JUEGA
+
+  Es una novela visual con partidas de Farkle (un juego de dados) de por
+  medio. Se hace clic para avanzar el diálogo y se eligen las respuestas.
+
+  Quien pierde cada ronda se saca una prenda. Daku hace trampa con
+  telequinesis: cambia el valor de un dado cuando uno está distraído.
+  Se lo puede acusar, pero acusar de más también se paga.
+
+  Hay cinco finales distintos.
+
+
+LA CARPETA
+
+  Jugar.html    el juego
+  assets/       el arte y la música
+  offline/      el código y los diálogos
+  vendor/       el motor (Phaser) y las tipografías
+
+  Hay que dejar todo junto: si se mueve Jugar.html a otra carpeta sin el
+  resto, no arranca.
