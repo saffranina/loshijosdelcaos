@@ -247,7 +247,8 @@ export class FarkleScene extends Phaser.Scene {
     this.refreshHud();
     this.clearDice();
 
-    // Son exactamente tres rondas y cada una disputa una sola prenda.
+    // Cada ronda disputa una sola prenda; se juegan las que hagan falta hasta
+    // que alguien se quede sin las tres (ver checkGameOver).
     if (GameState.round === 1) this.beginTurn('rein');
     else this.tauntPhase(() => this.beginTurn('rein'));
   }
@@ -804,20 +805,31 @@ export class FarkleScene extends Phaser.Scene {
     });
   }
 
+  /**
+   * Se pierde al quedarse sin las TRES prendas, no al cabo de N rondas.
+   *
+   * Antes eran exactamente tres rondas y perdía quien hubiera ganado menos.
+   * Con eso, siete de cada diez partidas terminaban con los dos todavía
+   * vestidos y el juego declarando un perdedor que aún llevaba ropa puesta.
+   *
+   * Ahora se juega hasta que alguien pierde camisa, pantalón y ropa interior.
+   * Si van dos a dos, se juega otra ronda. Como cada ronda cuesta una sola
+   * prenda, hacen falta tres rondas como mínimo y cinco como máximo.
+   */
   checkGameOver() {
-    if (GameState.round >= 3) {
-      const loser = GameState.reinRoundsWon > GameState.dakuRoundsWon ? 'daku' : 'rein';
-      this.finish(loser);
+    const reinFuera = GameState.isNaked('rein');
+    const dakuFuera = GameState.isNaked('daku');
+    if (reinFuera || dakuFuera) {
+      this.finish(reinFuera ? 'rein' : 'daku');
       return;
     }
 
     GameState.round++;
-    this.don = false;
     this.refreshHud();
     this.startRound();
   }
 
-  /** @param {'rein'|'daku'|'tie'} loser quién se quedó sin nada */
+  /** @param {'rein'|'daku'} loser quién se quedó sin las tres prendas */
   finish(loser) {
     GameState.resolveEnding(loser);
     this.cameras.main.fadeOut(800, 0, 0, 0);

@@ -148,19 +148,10 @@ function dakuTurn(ai, policy, ctx, stats) {
 function playGame(policy, stats) {
   GameState.reset(config);
   const ai = new DakuAI(config);
-  let don = false;
 
   for (let guard = 0; guard < MAX_ROUNDS; guard++) {
     const ctx = { reinRound: 0, dakuRound: 0, lastChance: null, reinSkips: false };
     let turn = 'rein', turns = 0;
-
-    // Doble o nada: Daku lo propone una vez, cuando va perdiendo.
-    if (!GameState.donOffered &&
-        GameState.dakuLost >= config.double_or_nothing_threshold &&
-        GameState.dakuLost > GameState.reinLost) {
-      GameState.donOffered = true;
-      don = true;                       // el jugador simulado siempre acepta
-    }
 
     for (;;) {
       turns++;
@@ -185,24 +176,17 @@ function playGame(policy, stats) {
 
     // Fin de ronda
     if (ctx.reinRound === ctx.dakuRound) {
-      if (GameState.remaining('rein') === 1 && GameState.remaining('daku') === 1) {
-        GameState.loseGarments('rein', 1);
-        GameState.loseGarments('daku', 1);
-        return GameState.resolveEnding('tie');
-      }
       GameState.round++;
       continue;                          // ronda extra, nadie se quita nada
     }
 
+    // Una prenda por ronda y siempre a uno solo: por eso los dos no pueden
+    // quedarse sin ropa a la vez y no hay ending de empate.
     const loser = ctx.reinRound < ctx.dakuRound ? 'rein' : 'daku';
-    GameState.loseGarments(loser, don ? 2 : 1);
-    don = false;
+    GameState.loseGarments(loser, 1);
 
-    const reinOut = GameState.isNaked('rein');
-    const dakuOut = GameState.isNaked('daku');
-    if (reinOut && dakuOut) return GameState.resolveEnding('tie');
-    if (dakuOut) return GameState.resolveEnding('daku');
-    if (reinOut) return GameState.resolveEnding('rein');
+    if (GameState.isNaked('daku')) return GameState.resolveEnding('daku');
+    if (GameState.isNaked('rein')) return GameState.resolveEnding('rein');
 
     GameState.round++;
   }
