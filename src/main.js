@@ -58,9 +58,59 @@ async function precargarFuentes() {
   }
 }
 
+/**
+ * Portada de "click para empezar".
+ *
+ * No es decorativa: los navegadores no dejan que una página inicie audio hasta
+ * que la persona interactúa con ella. Phaser se queda esperando a que se
+ * decodifiquen los cuatro mp3 de música y la barra de carga se congela — se
+ * quedaba en 89% sin decir nada, como si el juego se hubiera colgado. Con un
+ * click previo el audio queda desbloqueado y la carga corre entera.
+ */
+function esperarClick() {
+  return new Promise((resolve) => {
+    const host = document.getElementById('game') || document.body;
+    const portada = document.createElement('button');
+    portada.type = 'button';
+    portada.setAttribute('aria-label', 'Empezar el juego');
+    portada.style.cssText = `
+      position:absolute; inset:0; width:100%; height:100%;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:22px; border:0; cursor:pointer;
+      background:#0a0708; color:#e0b878;
+      font-family:"Cormorant Garamond", Georgia, serif;
+    `;
+
+    const titulo = document.createElement('div');
+    titulo.textContent = 'Los hijos del caos';
+    titulo.style.cssText = 'font-size:46px; line-height:1;';
+
+    const sub = document.createElement('div');
+    sub.textContent = 'El último dado';
+    sub.style.cssText = 'font-size:20px; color:#8a6f5c; letter-spacing:.18em;';
+
+    const pista = document.createElement('div');
+    pista.textContent = 'click para empezar';
+    pista.style.cssText =
+      'font-family:Georgia,serif; font-size:14px; color:#6b5548; margin-top:26px;' +
+      'animation:ldc-latido 1.8s ease-in-out infinite;';
+
+    const est = document.createElement('style');
+    est.textContent = '@keyframes ldc-latido{0%,100%{opacity:.45}50%{opacity:1}}';
+    document.head.appendChild(est);
+
+    portada.append(titulo, sub, pista);
+    host.appendChild(portada);
+    portada.focus();
+
+    const empezar = () => { portada.remove(); resolve(); };
+    portada.addEventListener('click', empezar, { once: true });
+  });
+}
+
 // Expuesto en window para poder inspeccionar el estado desde la consola
 // del navegador durante el playtesting: window.game.scene.getScene('Farkle')
-precargarFuentes().then(() => {
+Promise.all([precargarFuentes(), esperarClick()]).then(() => {
   const game = new Phaser.Game(config);
   window.game = game;
 
