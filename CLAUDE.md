@@ -304,9 +304,19 @@ El prototipo de la Fase 2 está completo. Antes de tocar nada, leer `README.md`.
 
 Diferencias entre este documento y lo que existe en el repo:
 
-- **Sin Node.** Se corre con `jugar.bat` (servidor de Python) y Phaser por CDN.
-  No hay `npm install` ni build step. `package.json` está solo por si más adelante
-  se agrega uno.
+- **Sin Node.** Se corre con `jugar.bat` (servidor de Python). No hay
+  `npm install` ni build step para desarrollar. `package.json` está solo por si
+  más adelante se agrega uno.
+- **Nada viene de internet.** Phaser y las dos tipografías están guardados en
+  `vendor/`. Antes se pedían al CDN de jsdelivr y a Google Fonts; sin conexión
+  el juego no arrancaba y los títulos se caían a Georgia. No volver a poner un
+  `<link>` o un `<script>` a un dominio externo.
+- **`tools/empaquetar.py` arma el paquete para regalar.** Genera en `dist/` una
+  carpeta que se juega con doble clic en `Jugar.html`, sin servidor y sin
+  instalar nada — es lo que se le pasa a alguien para que pruebe el juego.
+  Para eso une los módulos de `src/` en un solo archivo, incrusta los JSON y
+  las tipografías, y `src/main.js` cambia a renderer de canvas cuando detecta
+  `file://`. El README lo explica; el propio script, con más detalle.
 - Se agregaron tres módulos que no estaban en la lista original:
   `GameState.js` (estado compartido entre escenas), `Dice.js` (el dado pintado por
   código) y `Ui.js` (botones y paneles). `theme.js` centraliza la paleta.

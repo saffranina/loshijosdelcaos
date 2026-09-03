@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Los hijos del caos: El último dado</title>
-  <!-- Fuentes desde vendor/, no desde Google: el juego tiene que verse
-       igual sin internet. Ver vendor/fonts/fuentes.css -->
-  <link href="./vendor/fonts/fuentes.css" rel="stylesheet">
+  <link href="./offline/fuentes.css" rel="stylesheet">
   <style>
     :root { color-scheme: dark; }
     html, body {
@@ -42,8 +40,8 @@
 </head>
 <body>
   <div id="game"></div>
-  <!-- Phaser guardado en el repo, no desde el CDN: mismo motivo. -->
   <script src="./vendor/phaser.min.js"></script>
-  <script type="module" src="./src/main.js?v=20260903c"></script>
+  <script src="./offline/datos.js"></script>
+  <script src="./offline/juego.js"></script>
 </body>
 </html>

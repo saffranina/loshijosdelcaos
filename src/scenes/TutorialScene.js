@@ -4,7 +4,7 @@ import { makeButton, paintBackdrop, panel } from '../systems/Ui.js';
 const PAGES = [
   {
     title: '1 · Aparta dados que puntúan',
-    body: 'Después de cada tirada debes elegir al menos un dado o combinación válida.\n\n\n\nHaz clic en un dado para seleccionarlo. Haz clic otra vez para deseleccionarlo.',
+    body: 'Después de cada tirada debes elegir al menos un dado o combinación válida.\n\nHaz clic en un dado para seleccionarlo. Haz clic otra vez para deseleccionarlo.',
     visual: 'singles',
   },
   {
@@ -57,6 +57,13 @@ export class TutorialScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
+
+    // Abierto como consulta, el Farkle sigue vivo debajo: Phaser sigue
+    // DIBUJANDO las escenas pausadas, y en la lista de main.js Tutorial va
+    // antes que Farkle, o sea que se dibujaba debajo y no se veía ni una
+    // regla. Solo asomaban los botones, que son HTML y van sobre el canvas.
+    if (this.volverA) this.scene.bringToTop();
+
     if (this.textures.exists('bg_room')) {
       const bg = this.add.image(width / 2, height / 2, 'bg_room');
       const src = this.textures.get('bg_room').getSourceImage();
@@ -127,15 +134,21 @@ export class TutorialScene extends Phaser.Scene {
   renderVisual(kind) {
     if (!this.textures.exists('dice_sheet')) return;
     if (kind === 'singles') {
+      // Debajo de donde el texto termine DE VERDAD, no en una altura fija:
+      // si la primera frase pasa a dos líneas (depende de la tipografía que
+      // haya conseguido cargar el navegador), una altura fija cae encima del
+      // segundo párrafo y se leen las dos cosas superpuestas.
+      const y = this.bodyText.y + this.bodyText.height + 36;
+
       for (const [x, label] of [[180, 'Cada'], [470, 'Cada']]) {
-        const t = this.add.text(x, 292, label, { fontFamily: F.body, fontSize: '16px', color: '#f4f7fa' })
+        const t = this.add.text(x, y, label, { fontFamily: F.body, fontSize: '16px', color: '#f4f7fa' })
           .setOrigin(0, 0.5).setDepth(5);
         this.visualItems.push(t);
       }
-      this.die(1, 243, 292, 42);
-      this.die(5, 533, 292, 42);
+      this.die(1, 243, y, 42);
+      this.die(5, 533, y, 42);
       for (const [x, label] of [[271, 'vale 100 puntos'], [561, 'vale 50 puntos']]) {
-        const t = this.add.text(x, 292, label, { fontFamily: F.body, fontSize: '16px', color: '#f4f7fa' })
+        const t = this.add.text(x, y, label, { fontFamily: F.body, fontSize: '16px', color: '#f4f7fa' })
           .setOrigin(0, 0.5).setDepth(5);
         this.visualItems.push(t);
       }
