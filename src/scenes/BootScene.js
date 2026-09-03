@@ -38,9 +38,18 @@ export class BootScene extends Phaser.Scene {
     this.missing = [];
     this.load.on('loaderror', (file) => this.missing.push(file.key));
 
-    // Datos (obligatorios)
-    this.load.json('dialogues', 'src/data/dialogues.json');
-    this.load.json('farkleConfig', 'src/data/farkle-config.json');
+    // Datos (obligatorios).
+    //
+    // En el paquete offline vienen ya incrustados en datos.js: load.json usa
+    // XHR y desde file:// (doble clic, sin servidor) el navegador lo bloquea.
+    // Ver tools/empaquetar.py.
+    if (window.LDC_DATOS) {
+      this.cache.json.add('dialogues', window.LDC_DATOS.dialogues);
+      this.cache.json.add('farkleConfig', window.LDC_DATOS.farkleConfig);
+    } else {
+      this.load.json('dialogues', 'src/data/dialogues.json');
+      this.load.json('farkleConfig', 'src/data/farkle-config.json');
+    }
 
     // Portraits (opcionales)
     for (const who of ['rein', 'daku']) {

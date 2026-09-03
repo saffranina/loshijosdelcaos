@@ -1,0 +1,50 @@
+/* Las dos fuentes del juego, servidas desde esta carpeta en vez de desde
+   Google Fonts. Sin esto el juego necesita internet para verse bien: sin
+   conexión el <link> a fonts.googleapis.com falla en silencio y los títulos
+   caen en Georgia.
+
+   Los .woff2 salen del paquete @fontsource (los mismos archivos que sirve
+   Google, subconjunto latino). Solo están los cortes que el juego usa. */
+
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./cormorant-garamond-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./cormorant-garamond-latin-500-italic.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./cormorant-garamond-latin-700-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Spectral';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./spectral-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Spectral';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./spectral-latin-400-italic.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Spectral';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./spectral-latin-600-normal.woff2') format('woff2');
+}

@@ -8,8 +8,19 @@ import { TutorialScene } from './scenes/TutorialScene.js';
 import { FarkleScene } from './scenes/FarkleScene.js';
 import { EndingScene } from './scenes/EndingScene.js';
 
+// El juego abierto con doble clic, sin servidor (ver tools/empaquetar.py).
+const SIN_SERVIDOR = location.protocol === 'file:';
+
 const config = {
-  type: Phaser.AUTO,
+  // WebGL se niega a subir a la placa una imagen leída del disco: la considera
+  // "de otro sitio" y la bloquea (texImage2D: contains cross-origin data). Se
+  // cargaba el arte pero no se dibujaba ni un pixel y el juego no pasaba de la
+  // barra de carga.
+  //
+  // El renderer de canvas no tiene ese problema: solo prohíbe LEER los pixeles
+  // de vuelta, y el juego no lee ninguno. Para una novela visual con un puñado
+  // de sprites la diferencia de rendimiento no se nota.
+  type: SIN_SERVIDOR ? Phaser.CANVAS : Phaser.AUTO,
   parent: 'game',
   width: 800,
   height: 600,
@@ -28,6 +39,19 @@ const config = {
     autoCenter: Phaser.Scale.NO_CENTER,
   },
   scene: [BootScene, TitleScene, Act1Scene, Act2Scene, TutorialScene, FarkleScene, EndingScene],
+
+  // El paquete que se le pasa a alguien para jugar sin instalar nada se abre
+  // con doble clic, o sea con la dirección file:// (ver tools/empaquetar.py).
+  // Ahí el navegador bloquea TODO pedido XHR, y Phaser por defecto baja las
+  // imágenes por XHR y la música por WebAudio (que también es XHR): la barra
+  // de carga se quedaba en cero y no cargaba ni un asset.
+  //
+  // Con estas dos opciones usa una etiqueta <img> y una <audio>, que sí leen
+  // archivos del disco. Solo se activan en file://; con servidor se sigue
+  // usando WebAudio, que suena mejor y arranca más rápido.
+  ...(SIN_SERVIDOR
+    ? { loader: { imageLoadType: 'HTMLImageElement' }, audio: { disableWebAudio: true } }
+    : {}),
 };
 
 // Poner `ctx.font = '52px Cormorant Garamond'` en un canvas NO hace que el
