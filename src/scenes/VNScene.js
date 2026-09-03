@@ -30,10 +30,10 @@ export class VNScene extends Phaser.Scene {
       paintBackdrop(this, this.bgOpts.top ?? C.roomWarm, this.bgOpts.bottom ?? C.roomDark);
     }
 
-    // Nuri aparece poco (sirve los tragos en el Acto 1) pero habla, así que
-    // tiene portrait propio como Rein y Daku.
+    // Nuri habla en el Acto 1 pero no tiene portrait: sus líneas dejan en pantalla
+    // el último retrato, atenuado. Su retrato se sacó a pedido de la autora.
     this.portraits = {};
-    for (const who of ['rein', 'daku', 'nuri']) {
+    for (const who of ['rein', 'daku']) {
       this.portraits[who] = new PortraitView(this, {
         x: width / 2, y: 238, width: 320, height: 400, who,
       }).setVisible(false);

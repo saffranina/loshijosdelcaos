@@ -26,7 +26,6 @@ export const C = {
   reinName:   '#8fb4d4',
   daku:       0x6b2f4a,
   dakuName:   '#d98ab0',
-  nuri:       0x6b5334,
   nuriName:   '#d9bd7a',
   narrator:   '#a99b8d',
 

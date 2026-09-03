@@ -50,8 +50,6 @@ export class BootScene extends Phaser.Scene {
     }
     for (const [key, path] of CLOTHING_PORTRAITS) this.load.image(key, path);
 
-    // Nuri solo tiene una expresión: sirve los tragos y se va.
-    this.load.image('nuri_neutral', 'assets/portraits/nuri/nuri_neutral.png');
 
     // Splash arts (opcionales)
     for (const s of SPLASHES) {
