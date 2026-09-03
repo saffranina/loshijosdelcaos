@@ -61,5 +61,16 @@ async function precargarFuentes() {
 // Expuesto en window para poder inspeccionar el estado desde la consola
 // del navegador durante el playtesting: window.game.scene.getScene('Farkle')
 precargarFuentes().then(() => {
-  window.game = new Phaser.Game(config);
+  const game = new Phaser.Game(config);
+  window.game = game;
+
+  // Phaser guarda en caché dónde está el canvas en la página y solo lo
+  // recalcula al redimensionar. Si la ventana es más chica que 800x600 la
+  // página se puede desplazar (ver index.html), y entonces el canvas se mueve
+  // sin que Phaser se entere: los clicks caen corridos justo lo que se
+  // desplazó, y los botones dejan de responder donde se ven.
+  const reubicar = () => game.scale && game.scale.updateBounds();
+  window.addEventListener('scroll', reubicar, { passive: true });
+  window.addEventListener('resize', reubicar);
+  document.addEventListener('visibilitychange', reubicar);
 });

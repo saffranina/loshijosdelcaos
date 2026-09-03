@@ -101,6 +101,36 @@
     const inRange = rate > 0.01 && rate < 0.045;
     check(`farkle con 6 dados ≈ 2.3% (dio ${(rate * 100).toFixed(2)}%)`, inRange, true);
 
+    // --- ropa: qué portrait toca según lo que perdió cada uno ---
+    // Es la regla que decide si Rein aparece vestido, sin camisa o en ropa
+    // interior. La usan tanto la escena del Farkle como los endings.
+    const { GameState } = await import('../src/systems/GameState.js');
+    const config = await fetch('../src/data/farkle-config.json').then((r) => r.json());
+
+    GameState.reset(config);
+    check('ropa: al empezar, Rein está vestido', GameState.clothingStage('rein'), 'clothed');
+    check('ropa: al empezar, Daku está vestido', GameState.clothingStage('daku'), 'clothed');
+
+    GameState.loseGarments('rein', 1);
+    check('ropa: Rein pierde 1 → sin camisa', GameState.clothingStage('rein'), 'shirtless');
+    check('ropa: Daku no se contagia', GameState.clothingStage('daku'), 'clothed');
+
+    GameState.loseGarments('rein', 1);
+    check('ropa: Rein pierde 2 → en ropa interior', GameState.clothingStage('rein'), 'underwear');
+    check('ropa: con 2 perdidas todavía no está desnudo', GameState.isNaked('rein'), false);
+
+    GameState.loseGarments('rein', 1);
+    check('ropa: Rein pierde las 3 → pierde el juego', GameState.isNaked('rein'), true);
+    check('ropa: y en el ending sigue mostrándose en ropa interior',
+      GameState.clothingStage('rein'), 'underwear');
+
+    GameState.reset(config);
+    GameState.loseGarments('daku', 3);
+    check('ropa: Daku desnudo → ending con Daku en ropa interior',
+      GameState.clothingStage('daku'), 'underwear');
+    check('ropa: y Rein sigue vestido', GameState.clothingStage('rein'), 'clothed');
+    GameState.reset(config);
+
     const s = document.getElementById('summary');
     s.className = fail ? 'fail' : 'ok';
     s.textContent = `${pass} pasaron · ${fail} fallaron`;

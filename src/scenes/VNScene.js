@@ -6,6 +6,7 @@ import { paintBackdrop } from '../systems/Ui.js';
 import { PortraitView } from '../systems/Portraits.js';
 import { DialogueSystem } from '../systems/DialogueSystem.js';
 import { SplashScreen } from '../systems/SplashScreen.js';
+import { GameState } from '../systems/GameState.js';
 
 export class VNScene extends Phaser.Scene {
   /**
@@ -38,12 +39,24 @@ export class VNScene extends Phaser.Scene {
       }).setVisible(false);
     }
 
+    // Los portraits tienen que reflejar la ropa que se perdió en el Farkle.
+    // Sin esto los endings mostraban al que perdió vestido de arriba a abajo,
+    // porque ClothingManager solo existe en la escena del juego de dados.
+    this.refreshClothing();
+
     this.splash = new SplashScreen(this);
 
     this.dialogue = new DialogueSystem(this, {
       onSpeaker: (speaker, expression) => this.showSpeaker(speaker, expression),
       onSplash: (line, done) => this.splash.show(line.splash, line.caption, done),
     });
+  }
+
+  /** Pone cada portrait en la etapa de ropa que corresponde al estado actual. */
+  refreshClothing() {
+    for (const who of ['rein', 'daku']) {
+      this.portraits[who]?.setClothingStage(GameState.clothingStage(who));
+    }
   }
 
   /** Muestra el portrait de quien habla; narrador y acotaciones lo atenúan. */

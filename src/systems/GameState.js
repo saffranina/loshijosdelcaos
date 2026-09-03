@@ -74,6 +74,21 @@ class State {
     return this.remaining(who) <= 0;
   }
 
+  /**
+   * Qué portrait corresponde según la ropa que le queda.
+   * Vive acá y no en ClothingManager porque también lo necesitan las escenas
+   * de novela visual: en los endings hay que mostrar a quien perdió como
+   * quedó, no vestido.
+   * @param {'rein'|'daku'} who
+   * @returns {'clothed'|'shirtless'|'underwear'}
+   */
+  clothingStage(who) {
+    const lost = who === 'rein' ? this.reinLost : this.dakuLost;
+    if (lost >= 2) return 'underwear';
+    if (lost >= 1) return 'shirtless';
+    return 'clothed';
+  }
+
   /** Nivel de desnudez para elegir el pool de taunts. */
   nakednessLevel(who) {
     const lost = who === 'rein' ? this.reinLost : this.dakuLost;

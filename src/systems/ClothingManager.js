@@ -45,7 +45,7 @@ export class ClothingManager {
     this.text.setText(label);
 
     if (this.portrait?.setClothingStage) {
-      this.portrait.setClothingStage(lostCount >= 2 ? 'underwear' : lostCount >= 1 ? 'shirtless' : 'clothed');
+      this.portrait.setClothingStage(GameState.clothingStage(this.who));
     }
   }
 
