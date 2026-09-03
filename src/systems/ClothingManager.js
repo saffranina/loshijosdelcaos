@@ -1,8 +1,8 @@
-// ClothingManager.js — 3 prendas por personaje, una por ronda. Dibuja un contador
-// de prendas debajo del portrait; cuando lleguen las capas PNG, addLayer()
-// las apila sobre el portrait base y el resto del código no cambia.
+// ClothingManager.js — 3 prendas por personaje. Dibuja el medidor de ropa que
+// va debajo del portrait y elige qué retrato toca según lo que quede puesto.
 
-import { C, F } from '../theme.js';
+
+import { C } from '../theme.js';
 import { GameState, GARMENTS, GARMENT_ES } from './GameState.js';
 
 export class ClothingManager {
@@ -18,9 +18,8 @@ export class ClothingManager {
     this.portrait = opts.portrait || null;
 
     this.g = scene.add.graphics().setDepth(60);
-    this.text = scene.add.text(opts.x, opts.y + 20, '', {
-      fontFamily: F.body, fontSize: '11px', color: C.textDim,
-    }).setOrigin(0.5, 0).setDepth(60);
+    // Sin texto debajo del medidor: los rectangulitos ya dicen cuánta ropa
+    // queda, y el número escrito sobraba.
 
     this.refresh();
   }
@@ -39,10 +38,6 @@ export class ClothingManager {
       g.fillStyle(on ? C.cloth : C.clothLost, on ? 0.9 : 0.55);
       g.fillRoundedRect(x0 + i * (pw + gap), this.y, pw, ph, 2);
     }
-    const label = remaining === 0
-      ? 'sin nada'
-      : `${remaining} prenda${remaining === 1 ? '' : 's'}`;
-    this.text.setText(label);
 
     if (this.portrait?.setClothingStage) {
       this.portrait.setClothingStage(GameState.clothingStage(this.who));
@@ -64,5 +59,5 @@ export class ClothingManager {
     });
   }
 
-  destroy() { this.g.destroy(); this.text.destroy(); }
+  destroy() { this.g.destroy(); }
 }

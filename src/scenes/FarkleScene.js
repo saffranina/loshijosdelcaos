@@ -18,6 +18,7 @@ import { ClothingManager } from '../systems/ClothingManager.js';
 import { DakuAI } from '../systems/DakuAI.js';
 import { GameState } from '../systems/GameState.js';
 import { playMusic } from '../systems/Music.js';
+import { dadoElegido, dadosLanzados } from '../systems/Sfx.js';
 import {
   rollDice, hasScoring, scoreSelection, describeSelection,
 } from '../systems/FarkleLogic.js';
@@ -82,6 +83,12 @@ export class FarkleScene extends Phaser.Scene {
     this.roundText = this.add.text(width / 2, 14, '', {
       fontFamily: F.body, fontSize: '13px', color: C.textDim, letterSpacing: 1,
     }).setOrigin(0.5, 0).setDepth(60);
+    // Cartel grande de turno. Va en el centro de la mesa, encima de los dados:
+    // es lo primero que hay que saber al mirar la pantalla.
+    this.turnBanner = this.add.text(width / 2, 120, '', {
+      fontFamily: F.title, fontSize: '27px', color: '#f4f7fa',
+    }).setOrigin(0.5).setDepth(80).setAlpha(0);
+
     this.turnPointsText = this.add.text(width / 2, 40, '', {
       fontFamily: F.body, fontSize: '13px', color: C.lamp,
     }).setOrigin(0.5, 0).setDepth(60);
@@ -159,7 +166,9 @@ export class FarkleScene extends Phaser.Scene {
    * por encima del tutorial.
    */
   abrirReglas() {
-    if (this.busy) return;
+    // Sin condiciones: antes había un `if (this.busy) return` y el botón moría
+    // en silencio durante cualquier animación, que es justo cuando uno se
+    // queda mirando la pantalla y quiere consultar las reglas.
     this.dialogue.setVisible(false);
     this.events.once('resume', () => this.dialogue.setVisible(true));
     this.scene.pause();
@@ -171,7 +180,9 @@ export class FarkleScene extends Phaser.Scene {
     this.reinScoreText.setText(`REINHART   ${this.reinRound ?? 0}`);
     this.dakuScoreText.setText(`${this.dakuRound ?? 0}   DAKU`);
     const don = this.don ? '  ·  DOBLE O NADA' : '';
-    this.roundText.setText(`RONDA ${s.round}/3  ·  META ${this.target}${don}`);
+    // Sin contador de rondas: lo que importa es la ropa, y eso ya se ve en
+    // los medidores debajo de cada retrato.
+    this.roundText.setText(`META ${this.target}${don}`);
     this.emp.refresh();
     this.drinks.refresh();
     this.clothing.rein.refresh();
@@ -268,6 +279,28 @@ export class FarkleScene extends Phaser.Scene {
     });
   }
 
+  /**
+   * Anuncia de quién es el turno con un cartel que entra y se va solo.
+   * Antes había que deducirlo del texto chico de la acotación.
+   */
+  anunciarTurno(who) {
+    const nombre = who === 'rein' ? 'Turno de Rein' : 'Turno de Daku';
+    this.turnBanner.setText(nombre)
+      .setColor(who === 'rein' ? C.reinName : C.dakuName)
+      .setAlpha(0)
+      .setScale(0.92);
+    this.tweens.killTweensOf(this.turnBanner);
+    this.tweens.add({
+      targets: this.turnBanner,
+      alpha: { from: 0, to: 1 },
+      scale: { from: 0.92, to: 1 },
+      duration: 260,
+      ease: 'Back.easeOut',
+      yoyo: true,
+      hold: 850,
+    });
+  }
+
   beginTurn(who) {
     this.turn = who;
     this.turnPoints = 0;
@@ -275,6 +308,8 @@ export class FarkleScene extends Phaser.Scene {
     this.turnsThisRound++;
 
     if (this.turnsThisRound > MAX_TURNS_PER_ROUND) { this.endRound(); return; }
+
+    this.anunciarTurno(who);
 
     if (who === 'rein' && this.reinSkipsTurn) {
       this.reinSkipsTurn = false;
@@ -354,6 +389,7 @@ export class FarkleScene extends Phaser.Scene {
 
     const values = rollDice(this.active.length);
     this.layoutDice();
+    dadosLanzados(this.active.length);
 
     let pending = this.active.length;
     this.active.forEach((idx, n) => {
@@ -381,6 +417,7 @@ export class FarkleScene extends Phaser.Scene {
     if (this.selected.has(idx)) this.selected.delete(idx);
     else this.selected.add(idx);
     die.setSelected(this.selected.has(idx));
+    dadoElegido();
     this.updateSelectionUi();
   }
 
