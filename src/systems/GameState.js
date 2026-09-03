@@ -132,8 +132,12 @@ class State {
 
   // ---- endings ----
   /**
-   * Los endings secretos tienen prioridad sobre los principales (ver GDD §8).
-   * @param {'rein'|'daku'|'tie'} loser quién se quedó sin ropa
+   * Quién se quedó sin las tres prendas.
+   *
+   * No hay empate: cada ronda la pierde uno solo, así que los dos no pueden
+   * quedarse sin ropa a la vez. El ending de empate se quitó por eso.
+   *
+   * @param {'rein'|'daku'} loser
    */
   resolveEnding(loser) {
     if (loser === 'daku') {
