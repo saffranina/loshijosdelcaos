@@ -16,11 +16,24 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 PUERTO = 8123
 
 
+# Solo el código y los datos se piden de nuevo siempre. El arte y la música
+# pesan ~75 MB: si tampoco se cachearan, cada recarga los bajaría enteros y el
+# juego tardaría una eternidad en arrancar. Para esos alcanza con que el
+# navegador pregunte "¿cambió?" (eso ya lo hace solo con la fecha del archivo).
+SIEMPRE_FRESCO = (".html", ".js", ".mjs", ".json", ".css")
+
+
 class SinCache(SimpleHTTPRequestHandler):
     def end_headers(self):
-        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
-        self.send_header("Pragma", "no-cache")
-        self.send_header("Expires", "0")
+        ruta = self.path.split("?")[0].lower()
+        if ruta.endswith(SIEMPRE_FRESCO) or ruta.endswith("/"):
+            self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+            self.send_header("Pragma", "no-cache")
+            self.send_header("Expires", "0")
+        else:
+            # Revalidar contra la fecha del archivo: si no cambió, el navegador
+            # reusa el que ya tiene y no lo baja otra vez.
+            self.send_header("Cache-Control", "no-cache")
         super().end_headers()
 
     def log_message(self, formato, *args):
