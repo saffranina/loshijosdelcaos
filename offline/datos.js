@@ -529,41 +529,44 @@ window.LDC_DATOS = {
      ]
     }
    },
+   "big_score": {
+    "_comentario": "Cuando alguien saca mas de big_score_threshold puntos en UN solo apartado. Habla primero quien puntuo y contesta el otro. Si una lista esta vacia, esa linea no se dice; si lo estan las dos, no pasa nada y el turno sigue igual.",
+    "rein": {
+     "rein": [],
+     "daku": []
+    },
+    "daku": {
+     "daku": [],
+     "rein": []
+    }
+   },
    "daku_loses_garment": {
-    "jacket": [
-     "Hacía calor de todas formas. Además, me veo mejor sin ella. Admítelo."
-    ],
     "shoes": [
      "Descalzo. Más íntimo, ¿no? Como si estuviéramos en casa."
     ],
-    "socks": [
-     "¿Contento? ¿O necesitas más? Porque tengo más."
-    ],
     "shirt": [
-     "Ahí tienes, sargento. Todo tuyo. Bueno, la vista. Lo demás... todavía hay que ganarlo."
+     "Ahí tienes, sargento. Todo tuyo. Bueno, la vista. Lo demás... todavía hay que ganarlo.",
+     "Hacía calor de todas formas. Además, me veo mejor sin ella. Admítelo."
     ],
     "pants": [
-     "¿Sabes cuánta gente pagaría por verme así? Y tú lo tienes gratis. Bueno, al precio de un juego de dados."
+     "¿Sabes cuánta gente pagaría por verme así? Y tú lo tienes gratis. Bueno, al precio de un juego de dados.",
+     "¿Contento? ¿O necesitas más? Porque tengo más."
     ],
     "underwear": [
      "..."
     ]
    },
    "rein_loses_garment": {
-    "jacket": [
-     "Por fin. Esa chaqueta militar escondía demasiado. Es casi un crimen."
-    ],
     "shoes": [
      "Descalzo en mi habitación. Esto se pone doméstico. Me gusta."
     ],
-    "socks": [
-     "Poco a poco, soldadito. Poco a poco. No te voy a apurar... aunque ganas no me faltan."
-    ],
     "shirt": [
-     "Vaya, vaya... Sargento Diermissen. Tanto tiempo en la guardia te ha tratado muy, muy bien. Dios. Dame un segundo."
+     "Vaya, vaya... Sargento Diermissen. Tanto tiempo en la guardia te ha tratado muy, muy bien. Dios. Dame un segundo.",
+     "Por fin. Esa chaqueta militar escondía demasiado. Es casi un crimen."
     ],
     "pants": [
-     "Mira, voy a ser honesto contigo. Me está costando mucho concentrarme en los dados. Y creo que es obvio por qué."
+     "Mira, voy a ser honesto contigo. Me está costando mucho concentrarme en los dados. Y creo que es obvio por qué.",
+     "Poco a poco, soldadito. Poco a poco. No te voy a apurar... aunque ganas no me faltan."
     ],
     "underwear": [
      "..."
@@ -1252,6 +1255,7 @@ window.LDC_DATOS = {
  },
  "farkleConfig": {
   "round_target": 2000,
+  "big_score_threshold": 1000,
   "cheat_probability": 0.25,
   "ai_aggression": 0.6,
   "starting_emp": 5,

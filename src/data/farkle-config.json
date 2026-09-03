@@ -1,5 +1,6 @@
 {
   "round_target": 2000,
+  "big_score_threshold": 1000,
   "cheat_probability": 0.25,
   "ai_aggression": 0.6,
   "starting_emp": 5,

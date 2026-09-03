@@ -478,8 +478,43 @@ export class FarkleScene extends Phaser.Scene {
     this.layoutDice();
     this.turnPointsText.setText(`en la mesa: ${this.turnPoints}`);
 
-    if (rollAgain) this.time.delayedCall(320, () => this.playerRoll());
-    else this.playerBank();
+    const seguir = () => {
+      if (rollAgain) this.time.delayedCall(320, () => this.playerRoll());
+      else this.playerBank();
+    };
+    if (!this.reaccionJugada('rein', r.score, seguir)) seguir();
+  }
+
+  /**
+   * Reacción a una jugada grande: quien puntúa lo celebra y el otro contesta.
+   *
+   * Mira lo que vale UN apartado, no el total del turno: lo que impresiona es
+   * sacar la escalera de una, no ir sumando de a cincuenta.
+   *
+   * Mientras no haya líneas escritas para esto no pasa nada — devuelve false y
+   * el turno sigue su curso normal. Así el mecanismo puede existir antes que
+   * el texto sin dejar el juego a medias.
+   *
+   * @returns {boolean} true si se puso a hablar (y llamará a `next` al acabar)
+   */
+  reaccionJugada(quien, puntos, next) {
+    if (puntos <= (this.cfg.big_score_threshold ?? 1000)) return false;
+
+    const pool = this.d.act3.big_score && this.d.act3.big_score[quien];
+    if (!pool) return false;
+
+    const otro = quien === 'rein' ? 'daku' : 'rein';
+    const lines = [];
+    if (pool[quien] && pool[quien].length) {
+      lines.push({ speaker: quien, expression: 'smug', text: pick(pool[quien]) });
+    }
+    if (pool[otro] && pool[otro].length) {
+      lines.push({ speaker: otro, expression: 'surprised', text: pick(pool[otro]) });
+    }
+    if (!lines.length) return false;
+
+    this.dialogue.play(lines, next);
+    return true;
   }
 
   playerBank() {
@@ -683,10 +718,11 @@ export class FarkleScene extends Phaser.Scene {
       mustBeat: this.lastChance === 'daku' ? this.reinRound : null,
     });
 
-    this.time.delayedCall(1000, () => {
+    const seguir = () => this.time.delayedCall(1000, () => {
       if (cont) this.dakuStep();
       else this.dakuBank();
     });
+    if (!this.reaccionJugada('daku', keep.score, seguir)) seguir();
   }
 
   dakuBank() {
