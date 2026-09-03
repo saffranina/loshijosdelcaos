@@ -127,6 +127,12 @@ export class FarkleScene extends Phaser.Scene {
     };
     Object.values(this.buttons).forEach((b) => b.setDepth(70).setVisible(false));
 
+    // Consultar las reglas sin perder la partida. Siempre visible: las reglas
+    // del Farkle no se retienen a la primera y no queremos que haya que
+    // abandonar la ronda para mirarlas.
+    makeButton(this, 752, 82, 78, 24, '? Reglas', () => this.abrirReglas(), { fontSize: 12 })
+      .setDepth(70);
+
     // ---- diálogo ----
     this.dialogue = new DialogueSystem(this, {
       y: 418, h: 166,
@@ -142,6 +148,22 @@ export class FarkleScene extends Phaser.Scene {
       p.setActive(who === speaker);
       if (who === speaker && expression) p.setExpression(expression);
     }
+  }
+
+  /**
+   * Abre las reglas encima de la partida, sin reiniciarla.
+   *
+   * Pausar la escena en vez de cambiarla es lo que conserva los puntos de la
+   * ronda, los dados en la mesa y de quién es el turno. El cuadro de diálogo
+   * se esconde a mano porque es una capa HTML sobre el canvas: si no, se vería
+   * por encima del tutorial.
+   */
+  abrirReglas() {
+    if (this.busy) return;
+    this.dialogue.setVisible(false);
+    this.events.once('resume', () => this.dialogue.setVisible(true));
+    this.scene.pause();
+    this.scene.launch('Tutorial', { volverA: 'Farkle' });
   }
 
   refreshHud() {

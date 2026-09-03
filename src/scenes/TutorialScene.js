@@ -34,7 +34,26 @@ const PAGES = [
 export class TutorialScene extends Phaser.Scene {
   constructor() { super('Tutorial'); }
 
-  init(data) { this.nextScene = data?.next || 'Farkle'; }
+  /**
+   * Dos modos:
+   *   { next: 'Farkle' }    tutorial de entrada; al terminar arranca esa escena.
+   *   { volverA: 'Farkle' } consulta desde dentro de la partida; se abre encima
+   *                         y al cerrar devuelve el control sin reiniciar nada.
+   *
+   * La distinción importa: usar `next` desde el Farkle reiniciaría la escena y
+   * se perderían los puntos de la ronda, los dados y de quién es el turno.
+   */
+  init(data) {
+    this.nextScene = data?.next || 'Farkle';
+    this.volverA = data?.volverA || null;
+  }
+
+  /** Cierra la consulta y devuelve el control a la partida. */
+  cerrar() {
+    const volver = this.volverA;
+    this.scene.stop();
+    this.scene.resume(volver);
+  }
 
   create() {
     const { width, height } = this.scale;
@@ -67,8 +86,16 @@ export class TutorialScene extends Phaser.Scene {
     });
     this.next = makeButton(this, 545, 510, 190, 40, 'Siguiente', () => {
       if (this.page < PAGES.length - 1) { this.page++; this.renderPage(); }
+      else if (this.volverA) this.cerrar();
       else this.scene.start(this.nextScene);
     });
+
+    // Abierto desde la partida se puede cerrar en cualquier página, sin tener
+    // que pasar las seis.
+    if (this.volverA) {
+      makeButton(this, width - 74, 48, 108, 32, 'Cerrar', () => this.cerrar(), { fontSize: 14 });
+      this.input.keyboard.on('keydown-ESC', () => this.cerrar());
+    }
 
     this.page = 0;
     this.visualItems = [];
@@ -134,7 +161,9 @@ export class TutorialScene extends Phaser.Scene {
     this.bodyText.setText(p.body);
     this.pageText.setText(`${this.page + 1} / ${PAGES.length}`);
     this.back.setEnabled(this.page > 0);
-    this.next.setLabel(this.page === PAGES.length - 1 ? 'Empezar partida' : 'Siguiente');
+    this.next.setLabel(
+      this.page < PAGES.length - 1 ? 'Siguiente'
+        : this.volverA ? 'Volver a la partida' : 'Empezar partida');
     this.renderVisual(p.visual);
   }
 }
