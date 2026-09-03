@@ -42,6 +42,10 @@ TOLERANCIA = 8      # cuánto se aparta un píxel de un tono del damero y sigue 
 AREA_HUECO = 800    # huecos encerrados más chicos que esto se respetan
 PASADAS_HALO = 2
 MIN_PIEZA = 2000    # fragmentos opacos sueltos más chicos que esto son basura
+LUM_RESTOS = 200      # qué tan claro tiene que ser para contar como resto
+SAT_RESTOS = 32       # y qué tan poco color puede tener
+AREA_RESTO_MAX = 400  # manchas claras pegadas al fondo más chicas que esto son basura
+PASADAS_RESTOS = 8
 
 
 def detectar_tonos(lum, sat):
@@ -61,6 +65,21 @@ def detectar_tonos(lum, sat):
 
 def limpiar(path, tam=None, verbose=True):
     im = Image.open(path).convert("RGBA")
+
+    # El reescalado va PRIMERO, sobre la imagen todavía opaca.
+    #
+    # Al revés no funciona: si se calcula la transparencia y después se reduce,
+    # el filtro mezcla el color de lo transparente (que sigue siendo el blanco
+    # del damero) con el borde del dibujo y vuelve a inventar píxeles claros.
+    # Medido sobre "daku en tanga": 44 restos antes de reducir, 290 después.
+    # Premultiplicar por el alfa tampoco alcanza, porque al dividir de vuelta
+    # se amplifica el rebote del filtro en los bordes.
+    #
+    # Haciéndolo en este orden, la máscara se calcula sobre los píxeles
+    # definitivos y no queda nada por retocar después.
+    if tam and im.size != tam:
+        im = im.resize(tam, Image.LANCZOS)
+        tam = None
     a = np.asarray(im).astype(np.int16)
     rgb = a[:, :, :3]
     lum = rgb.max(axis=2)
@@ -116,10 +135,40 @@ def limpiar(path, tam=None, verbose=True):
                 print("  motitas sueltas eliminadas: %d (la mayor era de %d px)"
                       % (len(motitas), int(max(areas_fg[i - 1] for i in motitas))))
 
+    # 6) restos pegados al contorno.
+    #    Los pasos anteriores dejaban decenas de motitas de 1 a 45 px alrededor
+    #    de la silueta: cuadros del damero que el ruido de compresión del .jpg
+    #    corrió fuera del rango de tono, y que además tocan al personaje, así
+    #    que ni el relleno desde el borde ni la limpieza de islas sueltas las
+    #    alcanzaban. Contra un fondo oscuro se ven como puntitos blancos.
+    #
+    #    Criterio: un píxel claro y sin color que esté a menos de RADIO_RESTOS
+    #    del vacío es fondo. El dibujo no tiene grises claros en su contorno;
+    #    los blancos legítimos (ojos, brillos) están rodeados de dibujo y no
+    #    los toca. Se repite porque al quitar unos aparecen otros al lado.
+    #    El criterio NO es el tamaño sino si la mancha TOCA el fondo. Los
+    #    huecos de damero atrapados entre mechones de pelo son de 12 a 48 px
+    #    —demasiado chicos para el umbral de área— pero están pegados al vacío.
+    #    Los blancos legítimos (el brillo de un ojo, una hebilla) están
+    #    rodeados de dibujo por todos lados y no lo tocan nunca.
+    for _ in range(PASADAS_RESTOS):
+        claro = (lum >= LUM_RESTOS) & (sat <= SAT_RESTOS) & ~fondo
+        if not claro.any():
+            break
+        et_c, n_c = ndimage.label(claro)
+        if not n_c:
+            break
+        pegadas = set(int(v) for v in np.unique(et_c[ndimage.binary_dilation(fondo)])) - {0}
+        areas_c = ndimage.sum(np.ones_like(lum), et_c, range(1, n_c + 1))
+        quitar = [e for e in pegadas if areas_c[e - 1] < AREA_RESTO_MAX]
+        if not quitar:
+            break
+        fondo = fondo | np.isin(et_c, quitar)
+
     alpha = np.where(fondo, 0, 255).astype(np.uint8)
     out = Image.fromarray(np.dstack([a[:, :, :3].astype(np.uint8), alpha]), "RGBA")
     if tam and out.size != tam:
-        out = out.resize(tam, Image.LANCZOS)
+        out = reducir(out, tam)
 
     if verbose:
         op = np.asarray(out)[:, :, 3] > 24
