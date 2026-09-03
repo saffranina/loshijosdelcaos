@@ -1,6 +1,6 @@
 // main.js — configuración de Phaser y arranque.
 
-import { BootScene } from './scenes/BootScene.js';
+import { BootScene } from './scenes/BootScene.js?v=20260903c';
 import { TitleScene } from './scenes/TitleScene.js';
 import { Act1Scene } from './scenes/Act1Scene.js';
 import { Act2Scene } from './scenes/Act2Scene.js';

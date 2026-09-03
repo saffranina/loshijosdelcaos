@@ -23,10 +23,6 @@ export class BootScene extends Phaser.Scene {
   preload() {
     const { width, height } = this.scale;
 
-    this.add.text(width / 2, height / 2 - 30, 'Los hijos del caos: El último dado', {
-      fontFamily: F.title, fontSize: '30px', color: '#c9a56b',
-    }).setOrigin(0.5);
-
     const barW = 300;
     const barBg = this.add.graphics();
     barBg.lineStyle(1, C.boxStroke, 0.6);
