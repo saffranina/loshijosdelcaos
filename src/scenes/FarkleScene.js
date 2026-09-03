@@ -36,6 +36,27 @@ const TONES = [
 
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
+/**
+ * Normaliza una entrada de un pool de diálogo.
+ *
+ * Una entrada puede ser de dos formas:
+ *   "texto"                   una sola línea, la dice `porDefecto`
+ *   [{ speaker, text }, ...]  un intercambio: una línea y su respuesta
+ *
+ * Lo segundo hace falta porque hay parejas escritas para ir juntas — la
+ * respuesta solo tiene sentido después de SU línea. Sorteando los dos pools
+ * por separado se emparejaban al azar y la contestación no venía a cuento.
+ */
+const lineasDe = (entrada, porDefecto, expresion) => (
+  typeof entrada === 'string'
+    ? [{ speaker: porDefecto, expression: expresion, text: entrada }]
+    : entrada.map((l) => ({
+        speaker: l.speaker,
+        expression: l.expression || expresion,
+        text: l.text,
+      }))
+);
+
 export class FarkleScene extends Phaser.Scene {
   constructor() { super('Farkle'); }
 
@@ -239,19 +260,23 @@ export class FarkleScene extends Phaser.Scene {
       (idx) => {
         const tone = TONES[idx];
         GameState.lastTone = tone.key;
-        const reinLine = pick(this.d.act3.rein_taunts[tone.key][level]);
-        const dakuLine = pick(this.d.act3.daku_taunts[tone.daku][level]);
+        const reinEntry = pick(this.d.act3.rein_taunts[tone.key][level]);
+
+        // Intercambio ya escrito de principio a fin: se juega tal cual y no se
+        // le pega encima una respuesta sorteada de otro sitio.
+        if (typeof reinEntry !== 'string') {
+          this.dialogue.play(lineasDe(reinEntry, 'rein', 'smug'), next);
+          return;
+        }
+
+        const reinLine = reinEntry;
+        const dakuEntry = pick(this.d.act3.daku_taunts[tone.daku][level]);
         const stoic = tone.key === 'stoic';
         this.dialogue.say(
           { speaker: stoic && reinLine.startsWith('(') ? 'stage' : 'rein',
             expression: stoic ? 'neutral' : tone.key === 'flirt' ? 'flirty' : 'smug',
             text: stoic && reinLine.startsWith('(') ? reinLine.slice(1, -1) : reinLine },
-          () => {
-            this.dialogue.say(
-              { speaker: 'daku', expression: 'flirty', text: dakuLine },
-              next
-            );
-          }
+          () => this.dialogue.play(lineasDe(dakuEntry, 'daku', 'flirty'), next)
         );
       },
       { prompt: 'Tu turno de hablar.' }
@@ -626,12 +651,12 @@ export class FarkleScene extends Phaser.Scene {
     const toneKey = GameState.lastTone
       ? TONES.find((t) => t.key === GameState.lastTone).daku
       : 'vs_provoke';
-    const line = pick(this.d.act3.daku_taunts[toneKey][level]);
+    const entry = pick(this.d.act3.daku_taunts[toneKey][level]);
 
     const willCheat = this.ai.wantsToCheat(GameState);
     if (willCheat) this.time.delayedCall(900, () => this.tryCheat());
 
-    this.dialogue.say({ speaker: 'daku', expression: 'flirty', text: line }, () => {
+    this.dialogue.play(lineasDe(entry, 'daku', 'flirty'), () => {
       this.showAccuseWindow();
     });
   }
@@ -771,7 +796,7 @@ export class FarkleScene extends Phaser.Scene {
       this.refreshHud();
       const lines = lost
         .map((g) => pick(pool[g] || ['...']))
-        .map((t) => ({ speaker: 'daku', expression: 'flirty', text: t }));
+        .flatMap((entrada) => lineasDe(entrada, 'daku', 'flirty'));
 
       this.time.delayedCall(700, () => {
         this.dialogue.play(lines, () => this.checkGameOver());
