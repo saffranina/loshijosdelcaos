@@ -1,4 +1,4 @@
-# La Estrella de Mar — Strip Farkle
+# Los hijos del caos: El último dado
 
 Mini juego narrativo para web. Visual novel + Farkle con gestión de tres recursos.
 Universo: **Los hijos del caos** (Terhemin).

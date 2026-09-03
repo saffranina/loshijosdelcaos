@@ -1,5 +1,5 @@
 # CLAUDE.md — Instrucciones para Claude Code
-## Proyecto: La Estrella de Mar — Strip Farkle
+## Proyecto: Los hijos del caos: El último dado
 
 ---
 

@@ -1,12 +1,12 @@
 @echo off
 cd /d "%~dp0"
-title La Estrella de Mar
+title Los hijos del caos - El ultimo dado
 echo.
-echo   La Estrella de Mar - Strip Farkle
+echo   Los hijos del caos - El ultimo dado
 echo   -----------------------------------
 echo   Abriendo el juego...
 echo.
-start "La Estrella de Mar - servidor" /min python servidor.py
+start "Los hijos del caos - servidor" /min python servidor.py
 ping -n 3 127.0.0.1 >nul
 start "" http://localhost:8123/index.html
 echo   Listo. Se abrio el navegador.

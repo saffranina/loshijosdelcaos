@@ -23,7 +23,7 @@ export class BootScene extends Phaser.Scene {
   preload() {
     const { width, height } = this.scale;
 
-    this.add.text(width / 2, height / 2 - 30, 'La Estrella de Mar', {
+    this.add.text(width / 2, height / 2 - 30, 'Los hijos del caos: El último dado', {
       fontFamily: F.title, fontSize: '30px', color: '#c9a56b',
     }).setOrigin(0.5);
 
@@ -97,7 +97,7 @@ export class BootScene extends Phaser.Scene {
 
     if (this.missing.length) {
       console.info(
-        `[La Estrella de Mar] ${this.missing.length} assets todavía sin pintar ` +
+        `[Los hijos del caos: El último dado] ${this.missing.length} assets todavía sin pintar ` +
         `(se usan placeholders): ${this.missing.join(', ')}`
       );
     }

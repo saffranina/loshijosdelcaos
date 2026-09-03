@@ -46,7 +46,7 @@ def main():
         return 1
 
     print()
-    print("  La Estrella de Mar - servidor")
+    print("  Los hijos del caos: El ultimo dado - servidor")
     print("  ----------------------------------------")
     print("  Andando en http://localhost:%d/" % puerto)
     print()
