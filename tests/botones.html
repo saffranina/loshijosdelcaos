@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Botones — prueba de área de click</title>
+  <style>
+    body { margin:0; padding:14px; background:#0a0708; color:#c9b8a8;
+           font:12px ui-monospace, Consolas, monospace; }
+    h1 { font-size:13px; color:#e0b878; margin:0 0 4px; font-weight:600; }
+    p  { margin:0 0 10px; color:#8a7566; max-width:82ch; line-height:1.5; }
+    #game { position:relative; width:800px; height:600px;
+            background:#141d29; border:1px solid #3a2a28; overflow:hidden; }
+    #reporte { margin-top:10px; white-space:pre-wrap; line-height:1.55; }
+    .ok { color:#8fd48f; } .bad { color:#e08a7a; }
+  </style>
+</head>
+<body>
+  <h1>Botones — ¿el área de click coincide con el rectángulo que se ve?</h1>
+  <p>
+    Este era el bug: en la versión de canvas el área sensible no coincidía con el
+    botón dibujado, así que solo respondía cerca del texto y parecía corrido.
+    Acá se comprueba píxel a píxel, disparando clicks reales en los cuatro
+    bordes, en las esquinas y justo afuera.
+  </p>
+  <div id="game"></div>
+  <div id="reporte">…</div>
+
+<script type="module">
+import { makeButton } from '../src/systems/DomUi.js';
+
+// Escenario simulado: solo lo que DomUi necesita de Phaser.
+const host = document.getElementById('game');
+const escena = {
+  game: { canvas: { parentNode: host } },
+  events: { on() {}, off() {}, once() {} },
+};
+
+const rep = [];
+const check = (n, ok, extra = '') => rep.push(`${ok ? '✓' : '✗'} ${n}${extra ? '  — ' + extra : ''}`);
+
+// Un botón chico como el de "? Reglas", que era el que quedaba muerto.
+const X = 752, Y = 82, W = 78, H = 24;
+let clicks = 0;
+const btn = makeButton(escena, X, Y, W, H, '? Reglas', () => { clicks++; }, { fontSize: 12 });
+
+const h = host.getBoundingClientRect();
+const r = btn.el.getBoundingClientRect();
+const dx = r.left - h.left - host.clientLeft;
+const dy = r.top - h.top - host.clientTop;
+
+check('el botón queda centrado en las coordenadas del juego',
+  Math.round(dx + r.width / 2) === X && Math.round(dy + r.height / 2) === Y,
+  `centro en ${Math.round(dx + r.width / 2)}, ${Math.round(dy + r.height / 2)} (esperado ${X}, ${Y})`);
+check('tamaño exacto', Math.round(r.width) === W && Math.round(r.height) === H,
+  `${Math.round(r.width)}x${Math.round(r.height)}`);
+
+// elementFromPoint necesita un viewport real. En navegadores automatizados que
+// reportan 0x0 no sirve, así que en ese caso se salta y se avisa.
+const hayViewport = innerWidth > 0 && innerHeight > 0;
+const golpea = (px, py) => document.elementFromPoint(px, py) === btn.el;
+
+// Nueve puntos del botón: centro, cuatro bordes, cuatro esquinas.
+const dentro = [
+  ['centro',            r.left + r.width / 2, r.top + r.height / 2],
+  ['borde izquierdo',   r.left + 2,           r.top + r.height / 2],
+  ['borde derecho',     r.right - 2,          r.top + r.height / 2],
+  ['borde superior',    r.left + r.width / 2, r.top + 2],
+  ['borde inferior',    r.left + r.width / 2, r.bottom - 2],
+  ['esquina sup-izq',   r.left + 2,           r.top + 2],
+  ['esquina sup-der',   r.right - 2,          r.top + 2],
+  ['esquina inf-izq',   r.left + 2,           r.bottom - 2],
+  ['esquina inf-der',   r.right - 2,          r.bottom - 2],
+];
+if (hayViewport) {
+  let todosDentro = true;
+  for (const [nombre, px, py] of dentro) {
+    if (!golpea(px, py)) { todosDentro = false; check(`responde en ${nombre}`, false); }
+  }
+  check('responde en los 9 puntos del botón (centro, bordes y esquinas)', todosDentro);
+} else {
+  rep.push('· sin viewport real: se saltan las pruebas de golpe con el puntero');
+}
+
+// Y no debe responder justo afuera.
+const fuera = [
+  ['4 px a la izquierda', r.left - 4,  r.top + r.height / 2],
+  ['4 px a la derecha',   r.right + 4, r.top + r.height / 2],
+  ['4 px arriba',         r.left + r.width / 2, r.top - 4],
+  ['4 px abajo',          r.left + r.width / 2, r.bottom + 4],
+];
+if (hayViewport) {
+  let ningunoFuera = true;
+  for (const [nombre, px, py] of fuera) {
+    if (golpea(px, py)) { ningunoFuera = false; check(`NO responde ${nombre}`, false); }
+  }
+  check('no responde fuera del rectángulo', ningunoFuera);
+}
+
+// El click de verdad dispara la acción, incluso en una esquina.
+btn.el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+check('un click ejecuta la acción', clicks === 1, `se ejecutó ${clicks} vez/veces`);
+
+// Deshabilitado no debe ejecutar nada.
+btn.setEnabled(false);
+btn.el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+check('deshabilitado no ejecuta', clicks === 1, `sigue en ${clicks}`);
+btn.setEnabled(true);
+
+// setLabel / setVisible / setAction, que es lo que usan las escenas.
+btn.setLabel('Apartar y tirar');
+check('setLabel cambia el texto', btn.el.textContent === 'Apartar y tirar');
+btn.setVisible(false);
+check('setVisible(false) lo esconde', btn.el.hidden === true);
+btn.setVisible(true);
+let otro = 0;
+btn.setAction(() => { otro++; });
+btn.el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+check('setAction reemplaza la acción', otro === 1 && clicks === 1);
+
+// Y el encadenado que usan las escenas: b.setDepth(70).setVisible(false)
+let encadena = true;
+try { btn.setDepth(70).setVisible(true).setEnabled(true); } catch (e) { encadena = false; }
+check('se pueden encadenar setDepth().setVisible().setEnabled()', encadena);
+
+// Los tres botones de acción del Farkle, en sus posiciones reales.
+const filas = [[400 - 152, 384], [400, 384], [400 + 152, 384]];
+const cajas = filas.map(([bx, by], i) => {
+  const b = makeButton(escena, bx, by, 142, 34, `Botón ${i + 1}`, () => {}, { fontSize: 13 });
+  return b.el.getBoundingClientRect();
+});
+const bienPuestos = cajas.every((rr, i) =>
+  Math.round(rr.left - h.left - host.clientLeft + rr.width / 2) === filas[i][0] &&
+  Math.round(rr.top - h.top - host.clientTop + rr.height / 2) === filas[i][1]);
+check('los tres botones de acción caen en sus coordenadas', bienPuestos);
+
+const seSolapan = cajas.some((a, i) => cajas.some((b2, j) =>
+  i !== j && a.left < b2.right && b2.left < a.right && a.top < b2.bottom && b2.top < a.bottom));
+check('no se solapan entre sí', !seSolapan);
+
+// En HTML el área sensible ES el rectángulo del elemento: no hay forma de que
+// se desincronicen como pasaba con el hitbox dibujado a mano del canvas.
+rep.push('· el área de click de un <button> la define el navegador con su propio rectángulo');
+
+const fallos = rep.filter((l) => l.startsWith('✗')).length;
+document.getElementById('reporte').innerHTML =
+  rep.map((l) => `<span class="${l[0] === '✓' ? 'ok' : 'bad'}">${l}</span>`).join('\n') +
+  `\n\n<b class="${fallos ? 'bad' : 'ok'}">${rep.length - fallos} pasaron · ${fallos} fallaron</b>`;
+</script>
+</body>
+</html>

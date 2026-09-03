@@ -1,66 +1,13 @@
 // Ui.js — botones y paneles reutilizables. Placeholder pintado por código;
 // cuando lleguen los assets de UI se reemplaza el Graphics por una imagen.
 
-import { C, F } from '../theme.js';
+import { C } from '../theme.js';
 
-/**
- * Botón rectangular con hover y estado deshabilitado.
- * Devuelve un Container con .setEnabled(bool) y .setLabel(text).
- */
-export function makeButton(scene, x, y, w, h, label, onClick, opts = {}) {
-  const fill = opts.fill ?? 0x172534;
-  const stroke = opts.stroke ?? C.boxStroke;
-  const fontSize = opts.fontSize ?? 15;
-
-  const box = scene.add.graphics();
-  const text = scene.add.text(0, 0, label, {
-    fontFamily: F.body,
-    fontSize: `${fontSize}px`,
-    color: C.textMain,
-    align: 'center',
-    wordWrap: { width: w - 16 },
-  }).setOrigin(0.5);
-
-  const container = scene.add.container(x, y, [box, text]);
-  container.setSize(w, h);
-
-  let enabled = true;
-  let hover = false;
-  let action = onClick;
-
-  const redraw = () => {
-    box.clear();
-    const a = enabled ? 1 : 0.35;
-    box.fillStyle(hover && enabled ? 0x2b4054 : fill, 0.96 * a);
-    box.lineStyle(1, stroke, (hover && enabled ? 1 : 0.6) * a);
-    box.fillRoundedRect(-w / 2, -h / 2, w, h, 4);
-    box.strokeRoundedRect(-w / 2, -h / 2, w, h, 4);
-    text.setAlpha(enabled ? 1 : 0.4);
-    text.setColor(hover && enabled ? '#ffe9cf' : C.textMain);
-  };
-  redraw();
-
-  // El arte del botón está centrado en el Container; definimos el hitbox con
-  // las mismas coordenadas para que hover y clic no queden corridos.
-  container.setInteractive(
-    new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h),
-    Phaser.Geom.Rectangle.Contains,
-    true,
-  );
-  container.input.cursor = 'pointer';
-  container.on('pointerover', () => { hover = true; redraw(); });
-  container.on('pointerout', () => { hover = false; redraw(); });
-  container.on('pointerdown', (_pointer, _x, _y, event) => {
-    if (event?.stopPropagation) event.stopPropagation();
-    if (enabled && action) action();
-  });
-
-  container.setEnabled = (v) => { enabled = v; redraw(); return container; };
-  container.setLabel = (t) => { text.setText(t); return container; };
-  container.setAction = (fn) => { action = fn; return container; };
-  container.isEnabled = () => enabled;
-  return container;
-}
+// Los botones ahora se dibujan con HTML encima del canvas (DomUi.js): el área
+// de click en el canvas no coincidía con el rectángulo pintado y los botones
+// respondían corridos, solo cerca del texto. Se reexporta con el mismo nombre
+// para que ninguna escena tenga que cambiar.
+export { makeButton } from './DomUi.js';
 
 /** Panel de fondo con borde, para cuadros de diálogo y paneles de recursos. */
 export function panel(scene, x, y, w, h, opts = {}) {
