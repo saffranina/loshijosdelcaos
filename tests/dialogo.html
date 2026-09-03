@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Cuadro de diálogo — prueba aislada</title>
+  <style>
+    body { margin:0; padding:14px; background:#0a0708; color:#c9b8a8;
+           font:12px ui-monospace, Consolas, monospace; }
+    h1 { font-size:13px; color:#e0b878; margin:0 0 4px; font-weight:600; }
+    p  { margin:0 0 10px; color:#8a7566; max-width:80ch; line-height:1.5; }
+    /* Simula el contenedor del juego, con el mismo tamaño y fondo */
+    #game { position:relative; width:800px; height:600px;
+            background:#1b1013; border:1px solid #3a2a28; overflow:hidden; }
+    #controles { margin:10px 0; display:flex; gap:8px; flex-wrap:wrap; }
+    #controles button { font:12px ui-monospace, monospace; padding:6px 10px;
+      background:#241618; color:#c9b8a8; border:1px solid #6b4a35; border-radius:3px;
+      cursor:pointer; }
+    #controles button:hover { background:#3a2226; }
+    #reporte { margin-top:10px; white-space:pre-wrap; line-height:1.5; }
+    .ok { color:#8fd48f; } .bad { color:#e08a7a; }
+  </style>
+</head>
+<body>
+  <h1>Cuadro de diálogo en HTML — prueba sin Phaser</h1>
+  <p>
+    Prueba el DialogueSystem real con un escenario simulado, para poder verlo sin
+    esperar los 75 MB de assets. El texto de acá abajo es el mismo que va a salir
+    en el juego, al mismo tamaño y con la misma fuente.
+  </p>
+
+  <div id="game"></div>
+
+  <div id="controles"></div>
+  <div id="reporte">…</div>
+
+<script type="module">
+import { DialogueSystem } from '../src/systems/DialogueSystem.js';
+
+// --- Escenario simulado: solo lo que DialogueSystem usa de Phaser ---
+function crearEscenaFalsa(host) {
+  const oyentes = { pointer: [], key: [], cam: [] };
+  return {
+    game: { canvas: { parentNode: host } },
+    textures: { exists: () => false, get: () => null },
+    time: {
+      addEvent({ delay, repeat, callback }) {
+        let quedan = (repeat ?? 0) + 1;
+        const id = setInterval(() => {
+          callback();
+          if (--quedan <= 0) clearInterval(id);
+        }, delay);
+        return { remove: () => clearInterval(id) };
+      },
+    },
+    input: {
+      on: (ev, fn) => oyentes.pointer.push(fn),
+      off: () => {},
+      keyboard: { on: (ev, fn) => oyentes.key.push(fn), off: () => {} },
+    },
+    cameras: { main: { on: () => {}, off: () => {} } },
+    events: { once: () => {} },
+    _oyentes: oyentes,
+  };
+}
+
+const host = document.getElementById('game');
+const escena = crearEscenaFalsa(host);
+
+const dlg = new DialogueSystem(escena, {
+  y: 428, h: 154,
+  onSpeaker: (quien) => { ultimoHablante = quien; },
+});
+let ultimoHablante = null;
+
+// --- Botones de prueba ---
+const CASOS = [
+  ['Línea de Daku (larga)', () => dlg.say({
+    speaker: 'daku', expression: 'flirty',
+    text: 'Relájate, Diermissen. No muerdo. A menos que me lo pidas. Tengo una habitación arriba, la 7. Es cómoda. Tiene cama, mesa, y una cerradura que funciona.',
+  }, () => {})],
+  ['Línea de Rein (corta)', () => dlg.say({
+    speaker: 'rein', text: 'Y sin embargo aquí estás tú.',
+  }, () => {})],
+  ['Narrador', () => dlg.say({
+    speaker: 'narrator',
+    text: 'La Estrella de Mar. El putero más famoso de la ciudad. Uno de esos lugares donde las preguntas equivocadas te consiguen las respuestas correctas.',
+  }, () => {})],
+  ['Acotación', () => dlg.say({
+    speaker: 'stage', text: 'Pausa larga. Rein lo mira.',
+  }, () => {})],
+  ['3 opciones', () => dlg.choices(
+    [{ label: '🗡️ Provocar' }, { label: '😏 Coquetear' }, { label: '😐 Estoico' }],
+    (i) => dlg.note('stage', 'Elegiste la opción ' + (i + 1)),
+    { prompt: 'Tu turno de hablar.' })],
+  ['4 opciones', () => dlg.choices(
+    [{ label: '🗡️ "¿Tan desesperado estás?"' }, { label: '😏 "¿Tienes prisa por verme sin ropa?"' },
+     { label: '😐 "Acepto."' }, { label: '❌ "No."' }],
+    (i) => dlg.note('stage', 'Elegiste la opción ' + (i + 1)))],
+  ['note() del Farkle', () => dlg.note('stage', 'Turno de Rein — 350 en la mesa.')],
+];
+
+const controles = document.getElementById('controles');
+for (const [etq, fn] of CASOS) {
+  const b = document.createElement('button');
+  b.textContent = etq;
+  b.onclick = fn;
+  controles.appendChild(b);
+}
+
+// --- Comprobaciones automáticas ---
+const rep = [];
+const check = (nombre, ok, extra = '') => rep.push(
+  `${ok ? '✓' : '✗'} ${nombre}${extra ? '  — ' + extra : ''}`);
+
+const capa = host.querySelector('.ldc-dialogo');
+check('la capa se creó dentro de #game', !!capa && capa.parentNode === host);
+
+if (capa) {
+  const r = capa.getBoundingClientRect();
+  const h = host.getBoundingClientRect();
+  // clientLeft/clientTop descuentan el borde del contenedor de prueba, que en
+  // el juego real no existe.
+  const dx = Math.round(r.left - h.left - host.clientLeft);
+  const dy = Math.round(r.top - h.top - host.clientTop);
+  check('posición correcta (20, 428)', dx === 20 && dy === 428, `dio ${dx}, ${dy}`);
+  check('tamaño correcto (760×154)',
+    Math.round(r.width) === 760 && Math.round(r.height) === 154,
+    `dio ${Math.round(r.width)}×${Math.round(r.height)}`);
+
+  const cuerpo = capa.querySelector('.ldc-cuerpo');
+  const cs = getComputedStyle(cuerpo);
+  check('fuente del cuerpo es Georgia', cs.fontFamily.includes('Georgia'), cs.fontFamily);
+  check('tamaño del cuerpo es 17px', cs.fontSize === '17px', cs.fontSize);
+  check('es texto HTML de verdad (no canvas)', cuerpo.tagName === 'DIV');
+}
+
+// say() debe avisar quién habla y escribir el texto
+dlg.say({ speaker: 'daku', expression: 'smile', text: 'Prueba.' }, () => {});
+check('say() avisa el hablante al scene', ultimoHablante === 'daku', String(ultimoHablante));
+check('say() pone el nombre', capa.querySelector('.ldc-nombre').textContent === 'Daku');
+
+// choices() debe crear botones y limpiarlos al elegir
+let elegido = null;
+dlg.choices([{ label: 'A' }, { label: 'B' }], (i) => { elegido = i; });
+const botones = capa.querySelectorAll('.ldc-opcion');
+check('choices() crea un botón por opción', botones.length === 2, `dio ${botones.length}`);
+botones[1].click();
+check('elegir devuelve el índice', elegido === 1, String(elegido));
+check('los botones se limpian al elegir',
+  capa.querySelectorAll('.ldc-opcion').length === 0);
+
+// El click en un botón no debe además avanzar el diálogo
+let avanzo = false;
+dlg.say({ speaker: 'rein', text: 'x' }, () => { avanzo = true; });
+dlg._finishTyping();
+dlg.choices([{ label: 'unica' }], () => {});
+capa.querySelector('.ldc-opcion').click();
+check('el click en una opción no avanza el diálogo de atrás', avanzo === false);
+
+// Dejar algo lindo en pantalla
+dlg.say({ speaker: 'daku', expression: 'flirty',
+  text: 'Relájate, Diermissen. No muerdo. A menos que me lo pidas. Tengo una habitación arriba, la 7, y una cerradura que funciona.' }, () => {});
+
+const fallos = rep.filter((l) => l.startsWith('✗')).length;
+const el = document.getElementById('reporte');
+el.innerHTML = rep.map((l) => `<span class="${l[0] === '✓' ? 'ok' : 'bad'}">${l}</span>`).join('\n')
+  + `\n\n<b class="${fallos ? 'bad' : 'ok'}">${rep.length - fallos} pasaron · ${fallos} fallaron</b>`;
+</script>
+</body>
+</html>

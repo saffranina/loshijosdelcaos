@@ -30,17 +30,18 @@ const config = {
   scene: [BootScene, TitleScene, Act1Scene, Act2Scene, TutorialScene, FarkleScene, EndingScene],
 };
 
-// Poner `ctx.font = '19px Spectral'` en un canvas NO hace que el navegador
-// descargue esa webfont: solo la baja cuando un elemento del DOM la necesita.
-// Como index.html no tiene texto HTML, Phaser rasterizaba TODO en Georgia sin
-// avisar. Hay que pedirlas a mano y esperar antes de crear el juego, porque
-// Phaser dibuja cada texto una sola vez y no lo rehace cuando la fuente llega.
+// Poner `ctx.font = '52px Cormorant Garamond'` en un canvas NO hace que el
+// navegador descargue esa webfont: solo la baja cuando un elemento del DOM la
+// necesita. Como index.html no tiene texto HTML, Phaser rasterizaba en la
+// fuente de reserva sin avisar. Hay que pedirlas a mano y esperar antes de
+// crear el juego, porque Phaser dibuja cada texto una sola vez y no lo rehace
+// cuando la fuente llega tarde.
+//
+// Solo hace falta Cormorant Garamond, y solo para los títulos grandes: el
+// texto chico usa Georgia, que ya viene con Windows.
 const FUENTES = [
-  '600 19px "Spectral"',
-  'italic 400 19px "Spectral"',
-  '400 15px "Spectral"',
-  'bold 22px "Cormorant Garamond"',
   '500 52px "Cormorant Garamond"',
+  '500 30px "Cormorant Garamond"',
 ];
 
 async function precargarFuentes() {

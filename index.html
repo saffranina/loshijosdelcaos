@@ -24,6 +24,9 @@
       width: 800px;
       height: 600px;
       flex: none;
+      /* El cuadro de diálogo es una capa HTML encima del canvas (ver
+         DialogueSystem.js), y se posiciona respecto de este contenedor. */
+      position: relative;
       /* margin:auto centra igual que justify-content, pero si la ventana es
          más chica que 800x600 el desborde sigue siendo alcanzable con scroll
          en vez de quedar cortado a la izquierda. */

@@ -45,25 +45,27 @@ export const C = {
   dieDead:    0x8a7f70,
 };
 
-// Tipografía. Los tamaños y pesos NO son decorativos: están medidos con
-// tests/nitidez.html, que calcula qué proporción de la tinta de una letra cae
-// en tonos intermedios (más alto = se ve más difusa a 800x600).
+// Tipografía.
 //
-//   Spectral 400 a 15px ...... el más difuso de todos, era lo que había
-//   Spectral 400 a 17px ...... 52,7 %
-//   Cormorant Garamond a 19px  58,8 %   (es una fuente de titular, no de texto)
-//   Georgia 400 a 17px ....... 45,3 %
-//   Spectral 600 a 19px ...... 45,2 %   <- lo que usamos ahora
+// Georgia para todo lo que sea texto chico (diálogo, nombres, botones). No es
+// una elección estética sino técnica: Georgia fue diseñada para leerse en
+// pantalla a tamaños chicos y trae "hinting", que ajusta los trazos a la
+// grilla de píxeles. Las webfonts finas tipo Spectral o Cormorant Garamond no
+// lo tienen y a 15-19px se ven blandas.
 //
-// Si cambiás algo de acá, volvé a correr tests/nitidez.html.
+// Cormorant Garamond queda SOLO para el título grande (52px), que es el
+// tamaño para el que esa fuente está pensada.
+//
+// Para comparar opciones lado a lado: tests/nitidez.html
 export const F = {
-  body:  '"Spectral", Georgia, serif',
+  body:  'Georgia, "Times New Roman", serif',
+  name:  'Georgia, "Times New Roman", serif',
   title: '"Cormorant Garamond", Georgia, serif',
 
-  sizeBody:   '19px',
-  weightBody: '600',    // el peso normal (400) se deshilacha a este tamaño
-  sizeName:   '22px',
-  sizeSmall:  '15px',
+  sizeBody:   '17px',
+  weightBody: 'normal',
+  sizeName:   '19px',
+  sizeSmall:  '14px',
 };
 
 /** Nombre visible y color por speaker. */
