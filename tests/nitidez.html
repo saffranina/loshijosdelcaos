@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Nitidez del texto</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    body { margin:0; padding:14px; background:#0a0708; color:#c9b8a8;
+           font:12px ui-monospace, Consolas, monospace; }
+    h1 { font-size:14px; color:#e0b878; margin:0 0 6px; font-weight:600; }
+    #diag { margin-bottom:10px; line-height:1.5; }
+    .ok { color:#8fd48f; } .bad { color:#e08a7a; } .warn { color:#e0c07a; }
+    canvas { display:block; image-rendering:pixelated; margin-bottom:2px; }
+    .fila { margin-bottom:10px; }
+    .etq { color:#8a7566; margin-bottom:2px; }
+  </style>
+</head>
+<body>
+  <h1>Nitidez del texto — ¿es la fuente o es el escalado?</h1>
+  <div id="diag">midiendo…</div>
+  <div id="salida"></div>
+
+<script>
+const MUESTRA = 'Relájate, Diermissen. No muerdo.';
+const FONDO = '#111b27';
+
+// Las combinaciones exactas que usa el juego, más alternativas para comparar.
+const CASOS = [
+  { etq: 'Spectral 17px — cuerpo del diálogo (actual)',     font: '17px "Spectral", Georgia, serif',            color:'#f4f7fa' },
+  { etq: 'Cormorant Garamond 19px bold — nombre (actual)',  font: 'bold 19px "Cormorant Garamond", Georgia, serif', color:'#ffffff' },
+  { etq: 'Spectral 17px italic — acotaciones (actual)',     font: 'italic 17px "Spectral", Georgia, serif',     color:'#a7b4c1' },
+  { etq: 'Georgia 17px — la fuente de reserva',             font: '17px Georgia, serif',                        color:'#f4f7fa' },
+  { etq: 'Spectral 600 (semibold) 17px — más cuerpo',       font: '600 17px "Spectral", Georgia, serif',        color:'#f4f7fa' },
+  { etq: 'system-ui 16px — sin serifas',                    font: '16px system-ui, "Segoe UI", sans-serif',     color:'#f4f7fa' },
+  { etq: '— — — alternativas más grandes — — —',            font: '17px Georgia, serif',                        color:'#f4f7fa', separador:true },
+  { etq: 'Spectral 600 a 19px',                             font: '600 19px "Spectral", Georgia, serif',        color:'#f4f7fa' },
+  { etq: 'Georgia a 18px',                                  font: '18px Georgia, serif',                        color:'#f4f7fa' },
+  { etq: 'Cormorant Garamond 700 a 24px — nombres',         font: '700 24px "Cormorant Garamond", Georgia, serif', color:'#ffffff' },
+  { etq: 'Acotación en gris claro en vez de gris medio',    font: 'italic 17px "Spectral", Georgia, serif',     color:'#dbe3ea' },
+];
+
+const ZOOM = 4;
+const ANCHO = 300, ALTO = 26;
+
+/** Qué proporción de píxeles queda en tonos intermedios: más alto = más borroso. */
+function medirBorrosidad(ctx, w, h) {
+  const d = ctx.getImageData(0, 0, w, h).data;
+  let inter = 0, tinta = 0;
+  for (let i = 0; i < d.length; i += 4) {
+    // luminancia relativa entre el fondo (oscuro) y el texto (claro)
+    const l = (d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114);
+    if (l > 40) { tinta++; if (l < 200) inter++; }
+  }
+  return tinta ? (inter / tinta * 100) : 0;
+}
+
+// Poner ctx.font en un canvas NO hace que el navegador descargue una webfont.
+// Hay que pedirla a mano. Este es exactamente el bug que tenía el juego.
+const PEDIR = [
+  '400 17px "Spectral"', '600 17px "Spectral"', 'italic 400 17px "Spectral"',
+  '500 19px "Cormorant Garamond"', '700 19px "Cormorant Garamond"',
+];
+
+async function dibujar() {
+  try {
+    await Promise.all(PEDIR.map((f) => document.fonts.load(f)));
+    await document.fonts.ready;
+  } catch (e) {}
+
+  const cargada = (f) => { try { return document.fonts.check(f); } catch (e) { return false; } };
+  const spectral = cargada('17px "Spectral"');
+  const cormorant = cargada('19px "Cormorant Garamond"');
+
+  document.getElementById('diag').innerHTML =
+    `devicePixelRatio: <b>${window.devicePixelRatio}</b>` +
+    (window.devicePixelRatio === 1
+      ? ' <span class="ok">(1 = sin escalado de pantalla)</span>'
+      : ' <span class="bad">(distinto de 1: el navegador reescala todo)</span>') +
+    `<br>zoom del navegador: <b>${Math.round(window.outerWidth / window.innerWidth * 100)}%</b> aprox.` +
+    `<br>Spectral cargada: ${spectral ? '<span class="ok">sí</span>' : '<span class="bad">NO — se está usando Georgia</span>'}` +
+    ` &nbsp;·&nbsp; Cormorant Garamond cargada: ${cormorant ? '<span class="ok">sí</span>' : '<span class="bad">NO</span>'}` +
+    `<br><span class="warn">Cuanto más alto el % de "tinta intermedia", más difusa se ve la letra.</span>`;
+
+  const salida = document.getElementById('salida');
+
+  for (const caso of CASOS) {
+    // 1) dibujar a tamaño real, exactamente como lo hace Phaser
+    const c = document.createElement('canvas');
+    c.width = ANCHO; c.height = ALTO;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = FONDO; ctx.fillRect(0, 0, ANCHO, ALTO);
+    ctx.font = caso.font;
+    ctx.fillStyle = caso.color;
+    ctx.textBaseline = 'middle';
+    ctx.fillText(MUESTRA, 4, ALTO / 2);
+
+    const borrosidad = medirBorrosidad(ctx, ANCHO, ALTO);
+
+    // 2) ampliar sin interpolar, para ver los píxeles tal cual son
+    const z = document.createElement('canvas');
+    z.width = ANCHO * ZOOM; z.height = ALTO * ZOOM;
+    const zctx = z.getContext('2d');
+    zctx.imageSmoothingEnabled = false;
+    zctx.drawImage(c, 0, 0, ANCHO * ZOOM, ALTO * ZOOM);
+    z.style.width = (ANCHO * ZOOM / 2) + 'px';   // mostrado a 2x para que entre
+
+    const fila = document.createElement('div');
+    fila.className = 'fila';
+    const etq = document.createElement('div');
+    etq.className = 'etq';
+    etq.textContent = `${caso.etq}  —  tinta intermedia: ${borrosidad.toFixed(1)}%`;
+    fila.appendChild(etq);
+    fila.appendChild(z);
+    salida.appendChild(fila);
+  }
+}
+dibujar();
+</script>
+</body>
+</html>

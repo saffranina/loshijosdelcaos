@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulación de balance — Strip Farkle</title>
+  <style>
+    body { background:#0f0b0c; color:#d8c8b8; font:13px ui-monospace, Consolas, monospace; padding:24px; line-height:1.55; }
+    h1 { font-size:18px; color:#e0b878; font-weight:600; margin:0 0 4px; }
+    h2 { font-size:14px; color:#c9a56b; margin:26px 0 6px; font-weight:600; }
+    p.note { color:#8a7566; max-width:70ch; margin:0 0 18px; }
+    table { border-collapse:collapse; margin:6px 0 14px; }
+    td, th { padding:3px 14px 3px 0; text-align:left; }
+    th { color:#8a7566; font-weight:normal; border-bottom:1px solid #3a2a28; }
+    .ok { color:#8fd48f; } .warn { color:#e0c07a; } .bad { color:#e08a7a; }
+    #status { padding:8px 12px; border:1px solid #6b4a35; border-radius:4px; display:inline-block; margin-bottom:12px; }
+  </style>
+</head>
+<body>
+  <h1>Simulación de balance</h1>
+  <p class="note">
+    Juega partidas completas sin gráficos, usando los mismos módulos que el juego
+    (FarkleLogic, DakuAI, GameState) y las mismas reglas de ronda que FarkleScene.
+    Sirve para el checkpoint de playtesting: ¿las rondas terminan?, ¿cuántas prendas
+    se pierden?, ¿se alcanzan los 5 endings?
+  </p>
+  <div id="status">corriendo…</div>
+  <div id="out"></div>
+
+<script type="module">
+import { rollDice, hasScoring, validKeeps, expectedValueOfRolling } from '../src/systems/FarkleLogic.js';
+import { DakuAI } from '../src/systems/DakuAI.js';
+import { GameState } from '../src/systems/GameState.js';
+
+const config = await fetch('../src/data/farkle-config.json').then(r => r.json());
+const MAX_TURNS_PER_ROUND = 16;
+const MAX_ROUNDS = 40;
+
+// ---------------------------------------------------------------- políticas
+// Cómo juega el "Rein" simulado. Cada una representa un tipo de jugador real.
+const POLICIES = {
+  'Jugador normal': {
+    // Ve la trampa según lo sobrio que esté; a veces acusa de más.
+    detects: () => Math.random() < 0.35 + 0.5 * GameState.sobriety,
+    falseAccuse: () => Math.random() < 0.07,
+    drinks: () => GameState.emp <= 1 && GameState.sobriety > 0.2,
+    aggression: 0.55,
+  },
+  'Ojo perfecto': {
+    detects: () => true,
+    falseAccuse: () => false,
+    drinks: () => GameState.emp === 0 && GameState.sobriety > 0,
+    aggression: 0.55,
+  },
+  'Nunca acusa': {
+    detects: () => false,
+    falseAccuse: () => false,
+    drinks: () => false,
+    aggression: 0.55,
+  },
+  'Borracho temerario': {
+    detects: () => Math.random() < 0.35 + 0.5 * GameState.sobriety,
+    falseAccuse: () => Math.random() < 0.18,
+    drinks: () => GameState.sobriety > 0,
+    aggression: 0.85,
+  },
+};
+
+// ------------------------------------------------------- turno del jugador
+function chooseKeep(dice, turnPoints, aggression) {
+  const keeps = validKeeps(dice);
+  if (!keeps.length) return null;
+  let best = null, bestValue = -Infinity;
+  for (const k of keeps) {
+    const remaining = dice.length - k.indices.length;
+    const cont = Math.max(0, expectedValueOfRolling(remaining, turnPoints + k.score));
+    const value = k.score + cont * aggression;
+    if (value > bestValue) { bestValue = value; best = k; }
+  }
+  return best;
+}
+
+function reinTurn(policy, stats) {
+  let turnPoints = 0, kept = 0;
+  if (policy.drinks()) GameState.drink();
+  for (;;) {
+    if (kept >= 6) kept = 0;                       // dados calientes
+    const dice = rollDice(6 - kept);
+    stats.rolls++;
+    if (!hasScoring(dice)) { stats.farkles++; return 0; }
+    const keep = chooseKeep(dice, turnPoints, policy.aggression);
+    turnPoints += keep.score;
+    kept += keep.indices.length;
+    const remaining = 6 - kept;
+    const ev = expectedValueOfRolling(remaining, turnPoints);
+    if (ev + (policy.aggression - 0.5) * 120 <= 0) return turnPoints;
+  }
+}
+
+// ------------------------------------------------------------ turno de Daku
+function dakuTurn(ai, policy, ctx, stats) {
+  let turnPoints = 0, kept = 0;
+  for (;;) {
+    if (kept >= 6) kept = 0;
+    const dice = rollDice(6 - kept);
+    stats.rolls++;
+    if (!hasScoring(dice)) { stats.farkles++; return { points: 0 }; }
+
+    // Trampa (el jugador está leyendo el taunt).
+    let cheated = false;
+    if (ai.wantsToCheat(GameState)) {
+      const plan = ai.planCheat(dice, GameState.round);
+      if (plan) { dice[plan.index] = plan.to; GameState.cheatsTotal++; cheated = true; }
+    }
+
+    // Ventana de acusación: aparece siempre, haya trampa o no.
+    const wantsAccuse = cheated ? policy.detects() : policy.falseAccuse();
+    if (wantsAccuse && GameState.emp > 0) {
+      GameState.spendEmp();
+      GameState.accusationsMade++;
+      if (cheated) {
+        GameState.cheatsCaught++;
+        ai.notifyCaught();
+        return { points: 0, caught: true };
+      }
+      GameState.falseAccusations++;
+      ai.notifyMissed();
+      ctx.reinSkips = true;
+    }
+
+    const keep = ai.chooseKeep(dice, turnPoints);
+    if (!keep) return { points: turnPoints };
+    turnPoints += keep.score;
+    kept += keep.indices.length;
+
+    const cont = ai.shouldContinue({
+      turnPoints,
+      remaining: 6 - kept,
+      myRound: ctx.dakuRound,
+      oppRound: ctx.reinRound,
+      target: config.round_target,
+      mustBeat: ctx.lastChance === 'daku' ? ctx.reinRound : null,
+    });
+    if (!cont) return { points: turnPoints };
+  }
+}
+
+// ------------------------------------------------------------ partida entera
+function playGame(policy, stats) {
+  GameState.reset(config);
+  const ai = new DakuAI(config);
+  let don = false;
+
+  for (let guard = 0; guard < MAX_ROUNDS; guard++) {
+    const ctx = { reinRound: 0, dakuRound: 0, lastChance: null, reinSkips: false };
+    let turn = 'rein', turns = 0;
+
+    // Doble o nada: Daku lo propone una vez, cuando va perdiendo.
+    if (!GameState.donOffered &&
+        GameState.dakuLost >= config.double_or_nothing_threshold &&
+        GameState.dakuLost > GameState.reinLost) {
+      GameState.donOffered = true;
+      don = true;                       // el jugador simulado siempre acepta
+    }
+
+    for (;;) {
+      turns++;
+      if (turns > MAX_TURNS_PER_ROUND) break;
+
+      if (turn === 'rein') {
+        if (ctx.reinSkips) ctx.reinSkips = false;
+        else ctx.reinRound += reinTurn(policy, stats);
+      } else {
+        ctx.dakuRound += dakuTurn(ai, policy, ctx, stats).points;
+      }
+
+      const score = turn === 'rein' ? ctx.reinRound : ctx.dakuRound;
+      const other = turn === 'rein' ? 'daku' : 'rein';
+      if (ctx.lastChance === turn) break;
+      if (score >= config.round_target && ctx.lastChance === null) ctx.lastChance = other;
+      turn = other;
+    }
+
+    stats.roundTurns.push(turns);
+    stats.roundScores.push(ctx.reinRound, ctx.dakuRound);
+
+    // Fin de ronda
+    if (ctx.reinRound === ctx.dakuRound) {
+      if (GameState.remaining('rein') === 1 && GameState.remaining('daku') === 1) {
+        GameState.loseGarments('rein', 1);
+        GameState.loseGarments('daku', 1);
+        return GameState.resolveEnding('tie');
+      }
+      GameState.round++;
+      continue;                          // ronda extra, nadie se quita nada
+    }
+
+    const loser = ctx.reinRound < ctx.dakuRound ? 'rein' : 'daku';
+    GameState.loseGarments(loser, don ? 2 : 1);
+    don = false;
+
+    const reinOut = GameState.isNaked('rein');
+    const dakuOut = GameState.isNaked('daku');
+    if (reinOut && dakuOut) return GameState.resolveEnding('tie');
+    if (dakuOut) return GameState.resolveEnding('daku');
+    if (reinOut) return GameState.resolveEnding('rein');
+
+    GameState.round++;
+  }
+  return 'SIN_RESOLVER';
+}
+
+// ------------------------------------------------------------------ reporte
+const N = 400;
+const out = document.getElementById('out');
+const mean = (a) => a.reduce((x, y) => x + y, 0) / a.length;
+const median = (a) => { const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
+
+let anyUnresolved = 0;
+
+for (const [name, policy] of Object.entries(POLICIES)) {
+  const endings = {};
+  const stats = { rolls: 0, farkles: 0, roundTurns: [], roundScores: [] };
+  const rounds = [], cheats = [], caught = [], falses = [], drinksArr = [];
+
+  for (let i = 0; i < N; i++) {
+    const e = playGame(policy, stats);
+    endings[e] = (endings[e] || 0) + 1;
+    if (e === 'SIN_RESOLVER') anyUnresolved++;
+    rounds.push(GameState.round);
+    cheats.push(GameState.cheatsTotal);
+    caught.push(GameState.cheatsCaught);
+    falses.push(GameState.falseAccusations);
+    drinksArr.push(GameState.drinks);
+  }
+
+  const h2 = document.createElement('h2');
+  h2.textContent = `${name}  ·  ${N} partidas`;
+  out.appendChild(h2);
+
+  const rows = Object.entries(endings)
+    .sort((a, b) => b[1] - a[1])
+    .map(([k, v]) => `<tr><td>${k}</td><td>${v}</td><td>${(v / N * 100).toFixed(1)}%</td></tr>`)
+    .join('');
+
+  const t = document.createElement('table');
+  t.innerHTML =
+    `<tr><th>ending</th><th>n</th><th>%</th></tr>${rows}` +
+    `<tr><td colspan="3" style="height:8px"></td></tr>` +
+    `<tr><td>rondas por partida</td><td colspan="2">media ${mean(rounds).toFixed(1)} · mediana ${median(rounds)}</td></tr>` +
+    `<tr><td>turnos por ronda</td><td colspan="2">media ${mean(stats.roundTurns).toFixed(1)} · máx ${Math.max(...stats.roundTurns)}</td></tr>` +
+    `<tr><td>puntos por ronda</td><td colspan="2">media ${Math.round(mean(stats.roundScores))}</td></tr>` +
+    `<tr><td>trampas de Daku</td><td colspan="2">media ${mean(cheats).toFixed(1)} · acusadas bien ${mean(caught).toFixed(1)}</td></tr>` +
+    `<tr><td>acusaciones falsas</td><td colspan="2">media ${mean(falses).toFixed(2)}</td></tr>` +
+    `<tr><td>tragos</td><td colspan="2">media ${mean(drinksArr).toFixed(1)}</td></tr>` +
+    `<tr><td>tasa de Farkle</td><td colspan="2">${(stats.farkles / stats.rolls * 100).toFixed(1)}% de los tiros</td></tr>`;
+  out.appendChild(t);
+}
+
+const status = document.getElementById('status');
+if (anyUnresolved) {
+  status.className = 'bad';
+  status.textContent = `${anyUnresolved} partidas no terminaron — hay un bucle infinito en las reglas.`;
+} else {
+  status.className = 'ok';
+  status.textContent = `Todas las partidas terminaron. ${N * Object.keys(POLICIES).length} simuladas.`;
+}
+</script>
+</body>
+</html>

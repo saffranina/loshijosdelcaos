@@ -1,0 +1,11 @@
+{
+  "name": "la-estrella-de-mar",
+  "version": "0.2.0",
+  "description": "Strip Farkle — mini juego narrativo del universo Los hijos del caos",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "python -m http.server 8123",
+    "test": "echo \"Abrí http://localhost:8123/tests/test.html con el servidor corriendo\""
+  }
+}

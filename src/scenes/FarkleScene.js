@@ -1,0 +1,706 @@
+// FarkleScene.js — Acto 3. El mini juego completo: dados, trampas, EMP, alcohol y ropa.
+//
+// Flujo de una ronda:
+//   taunt del jugador → respuesta de Daku → (¿doble o nada?) → turnos alternados
+//   → alguien llega a la meta → el otro tiene un último turno → se compara → strip.
+//
+// La trampa de Daku ocurre MIENTRAS el jugador lee el taunt o pide un trago.
+// El juego nunca avisa que hubo trampa: el botón de acusar aparece siempre.
+
+import { C, F } from '../theme.js';
+import { paintBackdrop, makeButton, panel } from '../systems/Ui.js';
+import { PortraitView } from '../systems/Portraits.js';
+import { DialogueSystem } from '../systems/DialogueSystem.js';
+import { Die } from '../systems/Dice.js';
+import { EMPSystem } from '../systems/EMPSystem.js';
+import { DrinkSystem } from '../systems/DrinkSystem.js';
+import { ClothingManager } from '../systems/ClothingManager.js';
+import { DakuAI } from '../systems/DakuAI.js';
+import { GameState } from '../systems/GameState.js';
+import { playMusic } from '../systems/Music.js';
+import {
+  rollDice, hasScoring, scoreSelection, describeSelection,
+} from '../systems/FarkleLogic.js';
+
+const PLAY_Y = 205;
+const KEPT_Y = 292;
+const DIE_SIZE = 54;
+const MAX_TURNS_PER_ROUND = 16;   // red de seguridad contra rondas infinitas
+
+const TONES = [
+  { key: 'provoke', label: '🗡️ Provocar', daku: 'vs_provoke' },
+  { key: 'flirt',   label: '😏 Coquetear', daku: 'vs_flirt' },
+  { key: 'stoic',   label: '😐 Estoico',   daku: 'vs_stoic' },
+];
+
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+export class FarkleScene extends Phaser.Scene {
+  constructor() { super('Farkle'); }
+
+  create() {
+    this.cameras.main.fadeIn(600, 0, 0, 0);
+    this.d = GameState.dialogues;
+    this.cfg = GameState.config;
+    this.ai = new DakuAI(this.cfg);
+    playMusic(this, 'music_farkle');
+
+    this.target = this.cfg.round_target;
+    this.busy = false;
+    this.lastRestoredRound = 1;
+
+    this.buildUi();
+    this.startGame();
+  }
+
+  // ==================================================================
+  // Construcción de la pantalla
+  // ==================================================================
+
+  buildUi() {
+    const { width } = this.scale;
+
+    const tableBg = this.textures.exists('bg_farkle') ? 'bg_farkle' : 'bg_room';
+    if (this.textures.exists(tableBg)) {
+      const img = this.add.image(width / 2, 300, tableBg);
+      const src = this.textures.get(tableBg).getSourceImage();
+      img.setScale(Math.max(width / src.width, 600 / src.height));
+      this.add.rectangle(0, 0, width, 600, 0x000000, 0.42).setOrigin(0);
+    } else {
+      paintBackdrop(this, C.roomWarm, C.roomDark);
+    }
+
+    // ---- cabecera ----
+    panel(this, 12, 8, width - 24, 56, { alpha: 0.6, radius: 3 });
+
+    this.reinScoreText = this.add.text(24, 14, '', {
+      fontFamily: F.title, fontSize: '17px', color: C.reinName,
+    }).setDepth(60);
+    this.dakuScoreText = this.add.text(width - 24, 14, '', {
+      fontFamily: F.title, fontSize: '17px', color: C.dakuName,
+    }).setOrigin(1, 0).setDepth(60);
+    this.roundText = this.add.text(width / 2, 14, '', {
+      fontFamily: F.body, fontSize: '13px', color: C.textDim, letterSpacing: 1,
+    }).setOrigin(0.5, 0).setDepth(60);
+    this.turnPointsText = this.add.text(width / 2, 40, '', {
+      fontFamily: F.body, fontSize: '13px', color: C.lamp,
+    }).setOrigin(0.5, 0).setDepth(60);
+
+    this.emp = new EMPSystem(this, 24, 38);
+    this.drinks = new DrinkSystem(this, 235, 38);
+
+    // ---- portraits + ropa ----
+    this.portraits = {
+      rein: new PortraitView(this, { x: 100, y: 245, width: 152, height: 216, who: 'rein' }),
+      daku: new PortraitView(this, { x: 700, y: 245, width: 152, height: 216, who: 'daku' }),
+    };
+    this.portraits.rein.setExpression('neutral').setActive(false);
+    this.portraits.daku.setExpression('smile').setActive(false);
+
+    this.clothing = {
+      rein: new ClothingManager(this, { who: 'rein', x: 100, y: 358, portrait: this.portraits.rein }),
+      daku: new ClothingManager(this, { who: 'daku', x: 700, y: 358, portrait: this.portraits.daku }),
+    };
+
+    // ---- dados ----
+    this.dice = [];
+    for (let i = 0; i < this.cfg.dice_count; i++) {
+      const die = new Die(this, 0, PLAY_Y, DIE_SIZE, (d) => this.onDieClick(d));
+      die.setDepth(50).setVisible(false);
+      this.dice.push(die);
+    }
+    this.active = [];    // índices en juego este tiro
+    this.kept = [];      // índices apartados este turno
+    this.selected = new Set();
+
+    this.tableText = this.add.text(width / 2, 336, '', {
+      fontFamily: F.body, fontSize: '14px', color: C.textDim, align: 'center',
+    }).setOrigin(0.5, 0).setDepth(60).setInteractive({ useHandCursor: true });
+    this.tableText.on('pointerdown', () => this.clearSelection());
+    this.input.keyboard.on('keydown-ESC', () => this.clearSelection());
+
+    // ---- botones de acción ----
+    this.buttons = {
+      a: makeButton(this, 400 - 152, 384, 142, 34, '', () => {}, { fontSize: 13 }),
+      b: makeButton(this, 400, 384, 142, 34, '', () => {}, { fontSize: 13 }),
+      c: makeButton(this, 400 + 152, 384, 142, 34, '', () => {}, { fontSize: 13 }),
+    };
+    Object.values(this.buttons).forEach((b) => b.setDepth(70).setVisible(false));
+
+    // ---- diálogo ----
+    this.dialogue = new DialogueSystem(this, {
+      y: 418, h: 166,
+      onSpeaker: (speaker, expression) => this.showSpeaker(speaker, expression),
+    });
+
+    this.refreshHud();
+  }
+
+  showSpeaker(speaker, expression) {
+    for (const who of ['rein', 'daku']) {
+      const p = this.portraits[who];
+      p.setActive(who === speaker);
+      if (who === speaker && expression) p.setExpression(expression);
+    }
+  }
+
+  refreshHud() {
+    const s = GameState;
+    this.reinScoreText.setText(`REINHART   ${this.reinRound ?? 0}`);
+    this.dakuScoreText.setText(`${this.dakuRound ?? 0}   DAKU`);
+    const don = this.don ? '  ·  DOBLE O NADA' : '';
+    this.roundText.setText(`RONDA ${s.round}/3  ·  META ${this.target}${don}`);
+    this.emp.refresh();
+    this.drinks.refresh();
+    this.clothing.rein.refresh();
+    this.clothing.daku.refresh();
+  }
+
+  setButtons(defs) {
+    const keys = ['a', 'b', 'c'];
+    keys.forEach((k, i) => {
+      const btn = this.buttons[k];
+      const def = defs[i];
+      if (!def) { btn.setVisible(false); return; }
+      btn.setVisible(true).setLabel(def.label).setEnabled(def.enabled !== false);
+      btn.setAction(def.onClick);
+    });
+  }
+
+  hideButtons() {
+    Object.values(this.buttons).forEach((b) => b.setVisible(false));
+  }
+
+  // ==================================================================
+  // Ciclo de la partida
+  // ==================================================================
+
+  startGame() {
+    this.dialogue.play(this.d.act3.start, () => this.startRound());
+  }
+
+  startRound() {
+    if (GameState.round > 1 && this.lastRestoredRound !== GameState.round) {
+      GameState.restoreResources(1, 1);
+      this.lastRestoredRound = GameState.round;
+    }
+    this.reinRound = 0;
+    this.dakuRound = 0;
+    this.lastChance = null;
+    this.turnsThisRound = 0;
+    this.don = false;
+    this.reinSkipsTurn = this.reinSkipsTurn || false;
+    this.refreshHud();
+    this.clearDice();
+
+    // Son exactamente tres rondas y cada una disputa una sola prenda.
+    if (GameState.round === 1) this.beginTurn('rein');
+    else this.tauntPhase(() => this.beginTurn('rein'));
+  }
+
+  /** El jugador elige el tono; Daku responde. Es también un momento de distracción. */
+  tauntPhase(next) {
+    const level = GameState.sceneLevel();
+    this.dialogue.choices(
+      TONES.map((t) => ({ label: t.label })),
+      (idx) => {
+        const tone = TONES[idx];
+        GameState.lastTone = tone.key;
+        const reinLine = pick(this.d.act3.rein_taunts[tone.key][level]);
+        const dakuLine = pick(this.d.act3.daku_taunts[tone.daku][level]);
+        const stoic = tone.key === 'stoic';
+        this.dialogue.say(
+          { speaker: stoic && reinLine.startsWith('(') ? 'stage' : 'rein',
+            expression: stoic ? 'neutral' : tone.key === 'flirt' ? 'flirty' : 'smug',
+            text: stoic && reinLine.startsWith('(') ? reinLine.slice(1, -1) : reinLine },
+          () => {
+            this.dialogue.say(
+              { speaker: 'daku', expression: 'flirty', text: dakuLine },
+              next
+            );
+          }
+        );
+      },
+      { prompt: 'Tu turno de hablar.' }
+    );
+  }
+
+  /** Daku propone doble o nada cuando va perdiendo. */
+  offerDoubleOrNothing(next) {
+    const th = this.cfg.double_or_nothing_threshold ?? 3;
+    const losing = GameState.dakuLost >= th && GameState.dakuLost > GameState.reinLost;
+    if (GameState.donOffered || !losing) { next(); return; }
+    GameState.donOffered = true;
+
+    const don = this.d.act3.double_or_nothing;
+    this.dialogue.say(don.propose, () => {
+      this.dialogue.choices(don.options.map((o) => ({ label: o.label })), (idx) => {
+        const opt = don.options[idx];
+        this.don = !!opt.accept;
+        this.refreshHud();
+        this.dialogue.say(
+          { speaker: 'daku', expression: opt.expression, text: opt.reply },
+          next
+        );
+      });
+    });
+  }
+
+  beginTurn(who) {
+    this.turn = who;
+    this.turnPoints = 0;
+    this.clearDice();
+    this.turnsThisRound++;
+
+    if (this.turnsThisRound > MAX_TURNS_PER_ROUND) { this.endRound(); return; }
+
+    if (who === 'rein' && this.reinSkipsTurn) {
+      this.reinSkipsTurn = false;
+      this.dialogue.note('stage', 'Rein pierde el turno.');
+      this.time.delayedCall(1100, () => this.endTurn('rein'));
+      return;
+    }
+
+    this.refreshHud();
+    if (who === 'rein') this.playerRoll();
+    else this.dakuStep();
+  }
+
+  endTurn(who) {
+    this.hideButtons();
+    this.selected.clear();
+
+    if (this.lastChance === who) { this.endRound(); return; }
+
+    const score = who === 'rein' ? this.reinRound : this.dakuRound;
+    const other = who === 'rein' ? 'daku' : 'rein';
+    if (score >= this.target && this.lastChance === null) {
+      this.lastChance = other;
+      this.dialogue.note('stage',
+        `${who === 'rein' ? 'Rein' : 'Daku'} llegó a la meta. ` +
+        `${other === 'rein' ? 'Rein tiene' : 'Daku tiene'} un último turno.`);
+      this.time.delayedCall(1400, () => this.beginTurn(other));
+      return;
+    }
+    this.beginTurn(other);
+  }
+
+  // ==================================================================
+  // Dados
+  // ==================================================================
+
+  clearDice() {
+    this.active = [];
+    this.kept = [];
+    this.selected.clear();
+    this.dice.forEach((d) => { d.setVisible(false).setKept(false).setSelected(false); d.container.setScale(1); });
+    this.tableText.setText('');
+  }
+
+  layoutDice() {
+    const drunk = this.turn === 'rein' ? GameState.drunkenness : GameState.drunkenness * 0.6;
+
+    const spread = (indices, y, scale) => {
+      const gap = DIE_SIZE * scale + 10;
+      const total = indices.length * gap - 10;
+      indices.forEach((i, n) => {
+        const d = this.dice[i];
+        d.setVisible(true);
+        d.container.setScale(scale);
+        d.setPosition(this.scale.width / 2 - total / 2 + gap * n + (DIE_SIZE * scale) / 2, y);
+        d.setDrunk(drunk);
+      });
+    };
+    spread(this.active, PLAY_Y, 1);
+    spread(this.kept, KEPT_Y, 0.72);
+  }
+
+  /** Devuelve los índices que participarían en el próximo tiro. */
+  availableCount() {
+    return this.cfg.dice_count - this.kept.length;
+  }
+
+  rollFor(who, onDone) {
+    // Dados calientes: si apartó los 6, vuelve a tirar los 6.
+    if (this.kept.length >= this.cfg.dice_count) {
+      this.kept = [];
+      this.dice.forEach((d) => d.setKept(false));
+    }
+    const keptSet = new Set(this.kept);
+    this.active = this.dice.map((_, i) => i).filter((i) => !keptSet.has(i));
+    this.selected.clear();
+
+    const values = rollDice(this.active.length);
+    this.layoutDice();
+
+    let pending = this.active.length;
+    this.active.forEach((idx, n) => {
+      this.dice[idx].rollTo(values[n], 430 + n * 25, () => {
+        pending--;
+        if (pending === 0) onDone(values);
+      });
+    });
+  }
+
+  currentValues() { return this.active.map((i) => this.dice[i].value); }
+  selectedValues() { return [...this.selected].map((i) => this.dice[i].value); }
+
+  clearSelection() {
+    if (this.busy || this.turn !== 'rein' || !this.selectable || this.selected.size === 0) return;
+    this.selected.forEach((i) => this.dice[i].setSelected(false));
+    this.selected.clear();
+    this.updateSelectionUi();
+  }
+
+  onDieClick(die) {
+    if (this.busy || this.turn !== 'rein' || !this.selectable) return;
+    const idx = this.dice.indexOf(die);
+    if (!this.active.includes(idx)) return;
+    if (this.selected.has(idx)) this.selected.delete(idx);
+    else this.selected.add(idx);
+    die.setSelected(this.selected.has(idx));
+    this.updateSelectionUi();
+  }
+
+  updateSelectionUi() {
+    const vals = this.selectedValues();
+    const r = scoreSelection(vals);
+    if (vals.length === 0) {
+      this.tableText.setText('Elige los dados que quieres apartar.');
+    } else if (!r.valid) {
+      this.tableText.setText(`Dados elegidos: ${vals.join(', ')} · Esa selección no puntúa · Clic aquí o Esc para limpiar`);
+    } else {
+      this.tableText.setText(`${describeSelection(vals)}  →  +${r.score} · Clic aquí o Esc para limpiar`);
+    }
+
+    const ok = r.valid;
+    this.selected.forEach((i) => this.dice[i].setSelectionValid(ok));
+    this.buttons.a.setEnabled(ok);
+    this.buttons.b.setEnabled(ok);
+  }
+
+  // ==================================================================
+  // Turno de Rein
+  // ==================================================================
+
+  playerRoll() {
+    this.busy = true;
+    this.selectable = false;
+    this.hideButtons();
+    this.dialogue.note('stage', `Turno de Rein — ${this.turnPoints} en la mesa.`);
+    this.portraits.rein.setExpression('dice');
+
+    this.rollFor('rein', (values) => {
+      this.busy = false;
+      if (!hasScoring(values)) { this.playerFarkle(); return; }
+      this.selectable = true;
+      this.updateSelectionUi();
+      this.setButtons([
+        { label: 'Apartar y tirar', enabled: false, onClick: () => this.playerKeep(true) },
+        { label: 'Apartar y plantarse', enabled: false, onClick: () => this.playerKeep(false) },
+        { label: '🥃 Beber', enabled: GameState.sobriety > 0, onClick: () => this.playerDrink('turn') },
+      ]);
+    });
+  }
+
+  playerKeep(rollAgain) {
+    if (this.busy) return;
+    const vals = this.selectedValues();
+    const r = scoreSelection(vals);
+    if (!r.valid) return;
+    this.busy = true;
+
+    this.turnPoints += r.score;
+    this.selected.forEach((i) => { this.kept.push(i); this.dice[i].setKept(true); });
+    this.active = this.active.filter((i) => !this.selected.has(i));
+    this.selected.clear();
+    this.selectable = false;
+    this.hideButtons();
+    this.layoutDice();
+    this.turnPointsText.setText(`en la mesa: ${this.turnPoints}`);
+
+    if (rollAgain) this.time.delayedCall(320, () => this.playerRoll());
+    else this.playerBank();
+  }
+
+  playerBank() {
+    this.reinRound += this.turnPoints;
+    this.turnPointsText.setText('');
+    this.refreshHud();
+    this.dialogue.note('stage', `Rein se planta con ${this.turnPoints}. Total de ronda: ${this.reinRound}.`);
+    this.time.delayedCall(1300, () => this.endTurn('rein'));
+  }
+
+  playerFarkle() {
+    this.turnPoints = 0;
+    this.turnPointsText.setText('');
+    this.tableText.setText('');
+    this.active.forEach((i) => this.dice[i].setDead(true));
+    this.dialogue.note('stage', 'Farkle. Ningún dado puntúa. Rein pierde lo del turno.');
+    this.cameras.main.shake(220, 0.004);
+    this.time.delayedCall(1600, () => this.endTurn('rein'));
+  }
+
+  playerDrink(context, resume) {
+    this.hideButtons();
+    this.selectable = false;
+    GameState.drink();
+    this.refreshHud();
+    this.emp.pulse();
+    this.drinks.applyCameraWobble();
+
+    if (GameState.sobriety <= 0) {
+      this.busy = true;
+      this.dialogue.note('stage', 'El mundo se inclina. Rein ya no puede distinguir los dados.');
+      this.time.delayedCall(1500, () => {
+        GameState.ending = 'drunk_game_over';
+        this.cameras.main.fadeOut(600, 0, 0, 0);
+        this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Ending'));
+      });
+      return;
+    }
+
+    this.drinks.playDrinkAnimation(() => {
+      // Beber es un hueco de atención: si hay dados de Daku en la mesa,
+      // aprovecha para tocar uno.
+      if (context === 'accuse' && !this.pendingCheat && this.ai.wantsToCheat(GameState)) {
+        this.tryCheat();
+      }
+      this.afterDrinkDialogue(() => {
+        this.dice.forEach((d) => d.setDrunk(
+          this.turn === 'rein' ? GameState.drunkenness : GameState.drunkenness * 0.6));
+        if (resume) resume();
+        else {
+          this.selectable = true;
+          this.updateSelectionUi();
+          this.setButtons([
+            { label: 'Apartar y tirar', enabled: false, onClick: () => this.playerKeep(true) },
+            { label: 'Apartar y plantarse', enabled: false, onClick: () => this.playerKeep(false) },
+            { label: '🥃 Beber', enabled: GameState.sobriety > 0, onClick: () => this.playerDrink('turn') },
+          ]);
+          this.updateSelectionUi();
+        }
+      });
+    });
+  }
+
+  afterDrinkDialogue(next) {
+    const drink = this.d.act3.drink;
+    if (GameState.sobriety <= 0.4 && !this._saidVeryDrunk) {
+      this._saidVeryDrunk = true;
+      this.dialogue.play(drink.very_drunk, next);
+    } else if (GameState.drinks === 3 && !this._saidSeveral) {
+      this._saidSeveral = true;
+      this.dialogue.play(drink.several, next);
+    } else {
+      this.dialogue.say(drink.prompt, () => {
+        this.dialogue.choices(drink.options.map((o) => ({ label: o.label })), (idx) => {
+          const opt = drink.options[idx];
+          this.dialogue.say({ speaker: 'daku', expression: opt.expression, text: opt.reply }, next);
+        });
+      });
+    }
+  }
+
+  // ==================================================================
+  // Turno de Daku
+  // ==================================================================
+
+  dakuStep() {
+    this.busy = true;
+    this.selectable = false;
+    this.hideButtons();
+    this.pendingCheat = null;
+    this.dialogue.note('stage', `Turno de Daku — ${this.turnPoints} en la mesa.`);
+    this.portraits.daku.setExpression('dice');
+
+    this.time.delayedCall(500, () => {
+      this.rollFor('daku', (values) => {
+        this.busy = false;
+        if (!hasScoring(values)) { this.dakuFarkle(); return; }
+        this.dakuTaunt(values);
+      });
+    });
+  }
+
+  /**
+   * Daku suelta un taunt. El jugador mira abajo a leerlo — y ahí cambia el dado.
+   * Después aparecen SIEMPRE los botones de acusar, haya trampa o no.
+   */
+  dakuTaunt(values) {
+    const level = GameState.sceneLevel();
+    const toneKey = GameState.lastTone
+      ? TONES.find((t) => t.key === GameState.lastTone).daku
+      : 'vs_provoke';
+    const line = pick(this.d.act3.daku_taunts[toneKey][level]);
+
+    const willCheat = this.ai.wantsToCheat(GameState);
+    if (willCheat) this.time.delayedCall(900, () => this.tryCheat());
+
+    this.dialogue.say({ speaker: 'daku', expression: 'flirty', text: line }, () => {
+      this.showAccuseWindow();
+    });
+  }
+
+  tryCheat() {
+    const values = this.currentValues();
+    const plan = this.ai.planCheat(values, GameState.round);
+    if (!plan) return;
+    const dieIndex = this.active[plan.index];
+    GameState.cheatsTotal++;
+    this.pendingCheat = { dieIndex, ...plan };
+    this.dice[dieIndex].cheatTo(plan.to, this.ai.cheatFlashMs(GameState.drunkenness));
+  }
+
+  showAccuseWindow() {
+    const canAccuse = GameState.emp > 0;
+    this.setButtons([
+      {
+        label: `⚡ Acusar trampa (${GameState.emp})`,
+        enabled: canAccuse,
+        onClick: () => this.accuse(),
+      },
+      {
+        label: '🥃 Beber',
+        enabled: GameState.sobriety > 0,
+        onClick: () => this.playerDrink('accuse', () => this.showAccuseWindow()),
+      },
+      { label: 'Continuar', onClick: () => this.dakuDecide() },
+    ]);
+  }
+
+  accuse() {
+    this.hideButtons();
+    if (!GameState.spendEmp()) return;
+    GameState.accusationsMade++;
+    this.emp.pulse();
+    this.refreshHud();
+
+    if (this.pendingCheat) {
+      // Acierto: Daku pierde el turno.
+      GameState.cheatsCaught++;
+      GameState.restoreResources(1, 2);
+      this.ai.notifyCaught();
+      this.pendingCheat = null;
+      this.emp.pulse();
+      this.refreshHud();
+      this.dialogue.play(pick(this.d.act3.cheat_caught), () => {
+        this.turnPoints = 0;
+        this.turnPointsText.setText('');
+        this.endTurn('daku');
+      });
+    } else {
+      // Fallo: Rein pierde el turno siguiente.
+      GameState.falseAccusations++;
+      this.ai.notifyMissed();
+      this.reinSkipsTurn = true;
+      this.dialogue.play(pick(this.d.act3.cheat_false), () => this.dakuDecide());
+    }
+  }
+
+  dakuDecide() {
+    this.hideButtons();
+    const values = this.currentValues();
+    const keep = this.ai.chooseKeep(values, this.turnPoints);
+    if (!keep) { this.dakuFarkle(); return; }
+
+    // Aparta lo elegido.
+    const keptDice = keep.indices.map((i) => this.active[i]);
+    keptDice.forEach((i) => { this.kept.push(i); this.dice[i].setKept(true); });
+    this.active = this.active.filter((i) => !keptDice.includes(i));
+    this.turnPoints += keep.score;
+    this.turnPointsText.setText(`en la mesa: ${this.turnPoints}`);
+    this.tableText.setText(
+      `Daku aparta ${describeSelection(keptDice.map((i) => this.dice[i].value))}  →  +${keep.score}`);
+    this.layoutDice();
+
+    const remaining = this.availableCount();
+    const cont = this.ai.shouldContinue({
+      turnPoints: this.turnPoints,
+      remaining,
+      myRound: this.dakuRound,
+      oppRound: this.reinRound,
+      target: this.target,
+      mustBeat: this.lastChance === 'daku' ? this.reinRound : null,
+    });
+
+    this.time.delayedCall(1000, () => {
+      if (cont) this.dakuStep();
+      else this.dakuBank();
+    });
+  }
+
+  dakuBank() {
+    this.dakuRound += this.turnPoints;
+    this.turnPointsText.setText('');
+    this.refreshHud();
+    this.dialogue.note('stage', `Daku se planta con ${this.turnPoints}. Total de ronda: ${this.dakuRound}.`);
+    this.time.delayedCall(1300, () => this.endTurn('daku'));
+  }
+
+  dakuFarkle() {
+    this.turnPoints = 0;
+    this.turnPointsText.setText('');
+    this.active.forEach((i) => this.dice[i].setDead(true));
+    this.dialogue.note('stage', 'Farkle. Daku pierde lo del turno.');
+    this.time.delayedCall(1600, () => this.endTurn('daku'));
+  }
+
+  // ==================================================================
+  // Fin de ronda y de partida
+  // ==================================================================
+
+  endRound() {
+    this.hideButtons();
+    this.clearDice();
+    this.refreshHud();
+
+    if (this.reinRound === this.dakuRound) {
+      this.dialogue.note('stage',
+        `Empate a ${this.reinRound}. La misma prenda sigue en juego: desempate.`);
+      this.time.delayedCall(1800, () => this.startRound());
+      return;
+    }
+
+    const loser = this.reinRound < this.dakuRound ? 'rein' : 'daku';
+    if (loser === 'rein') GameState.dakuRoundsWon++;
+    else GameState.reinRoundsWon++;
+    const lost = GameState.loseGarments(loser, 1);
+    const pool = loser === 'rein' ? this.d.act3.rein_loses_garment : this.d.act3.daku_loses_garment;
+
+    this.dialogue.note('stage',
+      `${this.reinRound} — ${this.dakuRound}. ` +
+      `${loser === 'rein' ? 'Rein' : 'Daku'} pierde ${lost.length > 1 ? 'dos prendas' : 'una prenda'}.`);
+
+    this.clothing[loser].playStrip(() => {
+      this.refreshHud();
+      const lines = lost
+        .map((g) => pick(pool[g] || ['...']))
+        .map((t) => ({ speaker: 'daku', expression: 'flirty', text: t }));
+
+      this.time.delayedCall(700, () => {
+        this.dialogue.play(lines, () => this.checkGameOver());
+      });
+    });
+  }
+
+  checkGameOver() {
+    if (GameState.round >= 3) {
+      const loser = GameState.reinRoundsWon > GameState.dakuRoundsWon ? 'daku' : 'rein';
+      this.finish(loser);
+      return;
+    }
+
+    GameState.round++;
+    this.don = false;
+    this.refreshHud();
+    this.startRound();
+  }
+
+  /** @param {'rein'|'daku'|'tie'} loser quién se quedó sin nada */
+  finish(loser) {
+    GameState.resolveEnding(loser);
+    this.cameras.main.fadeOut(800, 0, 0, 0);
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Ending'));
+  }
+}

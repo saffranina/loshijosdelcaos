@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Tests — FarkleLogic</title>
+  <style>
+    body { background:#0f0b0c; color:#d8c8b8; font:14px ui-monospace, Consolas, monospace; padding:24px; }
+    h1 { font-size:18px; color:#e0b878; font-weight:600; }
+    .ok   { color:#8fd48f; }
+    .fail { color:#e08a7a; }
+    #summary { margin:18px 0; padding:10px 14px; border:1px solid #6b4a35; border-radius:4px; display:inline-block; }
+    div.case { padding:1px 0; }
+  </style>
+</head>
+<body>
+  <h1>FarkleLogic — tests</h1>
+  <div id="summary">corriendo…</div>
+  <div id="out"></div>
+
+  <script type="module">
+    import {
+      scoreSelection, hasScoring, bestKeep, describeSelection, validKeeps,
+    } from '../src/systems/FarkleLogic.js';
+
+    let pass = 0, fail = 0;
+    const out = document.getElementById('out');
+
+    function check(name, actual, expected) {
+      const a = JSON.stringify(actual), e = JSON.stringify(expected);
+      const ok = a === e;
+      ok ? pass++ : fail++;
+      const d = document.createElement('div');
+      d.className = 'case ' + (ok ? 'ok' : 'fail');
+      d.textContent = `${ok ? '✓' : '✗'} ${name}` + (ok ? '' : `  →  esperado ${e}, dio ${a}`);
+      out.appendChild(d);
+    }
+    const score = (d) => scoreSelection(d).score;
+    const valid = (d) => scoreSelection(d).valid;
+
+    // --- puntuación básica ---
+    check('un 1 = 100', score([1]), 100);
+    check('un 5 = 50', score([5]), 50);
+    check('dos 1s = 200', score([1, 1]), 200);
+    check('1 + 5 = 150', score([1, 5]), 150);
+    check('tres 1s = 1000', score([1, 1, 1]), 1000);
+    check('tres 2s = 200', score([2, 2, 2]), 200);
+    check('tres 6s = 600', score([6, 6, 6]), 600);
+    check('cuatro iguales = 1000', score([3, 3, 3, 3]), 1000);
+    check('cinco iguales = 2000', score([2, 2, 2, 2, 2]), 2000);
+    check('seis iguales = 3000', score([4, 4, 4, 4, 4, 4]), 3000);
+    check('seis 1s = 3000', score([1, 1, 1, 1, 1, 1]), 3000);
+    check('escalera 1-5 = 750', score([1, 2, 3, 4, 5]), 750);
+    check('escalera 1-6 = 1500', score([1, 2, 3, 4, 5, 6]), 1500);
+    check('tres pares = 1500', score([2, 2, 4, 4, 6, 6]), 1500);
+    check('dos tríos = 2500', score([2, 2, 2, 6, 6, 6]), 2500);
+    check('cuatro iguales + pareja = 1500', score([3, 3, 3, 3, 5, 5]), 1500);
+    check('tres 1s + un 5 = 1050', score([1, 1, 1, 5]), 1050);
+
+    // --- combinaciones donde conviene la regla especial ---
+    check('1,1,5,5,3,3 toma tres pares (1500) y no 300',
+      score([1, 1, 5, 5, 3, 3]), 1500);
+
+    // --- validez: no se puede apartar basura ---
+    check('[1,2] no es válido', valid([1, 2]), false);
+    check('[1,2] puntúa 0', score([1, 2]), 0);
+    check('[2] no es válido', valid([2]), false);
+    check('[2,2] no es válido', valid([2, 2]), false);
+    check('[1,1,1,2] no es válido', valid([1, 1, 1, 2]), false);
+    check('[] no es válido', valid([]), false);
+    check('[5,5,5,1] sí es válido', valid([5, 5, 5, 1]), true);
+
+    // --- detección de Farkle ---
+    check('2,3,4,6,6,2 es farkle', hasScoring([2, 3, 4, 6, 6, 2]), false);
+    check('2,2,2,3,4,6 no es farkle (triple)', hasScoring([2, 2, 2, 3, 4, 6]), true);
+    check('3,4,6,6,2,5 no es farkle (un 5)', hasScoring([3, 4, 6, 6, 2, 5]), true);
+    check('[2,3] es farkle', hasScoring([2, 3]), false);
+    check('tres pares no es farkle', hasScoring([2, 2, 3, 3, 4, 4]), true);
+
+    // --- mejor apartado ---
+    check('mejor de [1,1,1,2,3,4] = 1000', bestKeep([1, 1, 1, 2, 3, 4]).score, 1000);
+    check('mejor de [1,5,2,3,4,6] = 1500 (escalera)', bestKeep([1, 5, 2, 3, 4, 6]).score, 1500);
+    check('mejor de [2,3,4,6,6,2] = sin apartado', bestKeep([2, 3, 4, 6, 6, 2]), null);
+    check('mejor de [5,2,3,4,6,6] aparta 1 dado', bestKeep([5, 2, 3, 4, 6, 6]).indices.length, 1);
+
+    // --- el conjunto de apartados válidos nunca incluye basura ---
+    let sane = true;
+    for (const k of validKeeps([1, 5, 5, 2, 3, 4])) {
+      if (!scoreSelection(k.indices.map(i => [1, 5, 5, 2, 3, 4][i])).valid) sane = false;
+    }
+    check('todos los keeps propuestos son válidos', sane, true);
+
+    // --- descripciones ---
+    check('describe tres 1s', describeSelection([1, 1, 1]), '3×1');
+    check('describe escalera', describeSelection([1, 2, 3, 4, 5, 6]), 'Escalera');
+
+    // --- consistencia estadística de rollDice / hasScoring ---
+    const { rollDice } = await import('../src/systems/FarkleLogic.js');
+    let farkles = 0;
+    for (let i = 0; i < 20000; i++) if (!hasScoring(rollDice(6))) farkles++;
+    const rate = farkles / 20000;
+    const inRange = rate > 0.01 && rate < 0.045;
+    check(`farkle con 6 dados ≈ 2.3% (dio ${(rate * 100).toFixed(2)}%)`, inRange, true);
+
+    const s = document.getElementById('summary');
+    s.className = fail ? 'fail' : 'ok';
+    s.textContent = `${pass} pasaron · ${fail} fallaron`;
+  </script>
+</body>
+</html>

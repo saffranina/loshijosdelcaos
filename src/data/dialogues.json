@@ -1,0 +1,447 @@
+{
+  "act1": [
+    { "splash": "bar_entrance", "caption": "Exterior del bar. Noche. El cartel \"La Estrella de Mar\" sobre una puerta gastada. Luz cálida desde las ventanas." },
+    { "speaker": "narrator", "text": "La Estrella de Mar. El putero más famoso de la ciudad. Uno de esos lugares donde las preguntas equivocadas te consiguen las respuestas correctas — si sabes a quién preguntarle." },
+    { "speaker": "stage", "text": "Interior del bar. Humo denso, luz tenue, mesas de madera gastada. Risas y murmullo." },
+    { "speaker": "narrator", "text": "Reinhart entró sin prisa. Recorrió el lugar con la mirada. Caras desconocidas, la mayoría. Borrachos en la barra. Un grupo jugando cartas en la esquina. Y al fondo, un asiento vacío." },
+    { "speaker": "narrator", "text": "No estaba vacío por casualidad." },
+    { "speaker": "stage", "text": "Rein se sienta. Nuri se acerca." },
+    { "speaker": "nuri", "text": "¿Qué te sirvo, guapo?" },
+    { "speaker": "rein", "expression": "neutral", "text": "Lo más fuerte que tengas." },
+    { "speaker": "nuri", "text": "Enseguida." },
+    { "speaker": "stage", "text": "Nuri se aleja. Rein espera. Bebe. Observa el lugar." },
+    { "speaker": "narrator", "text": "Si su información era correcta, no tendría que esperar mucho." },
+    { "splash": "daku_behind", "caption": "Daku se acerca por detrás. Una mano apoyada en el respaldo de la silla. La boca cerca de su oído." },
+    { "speaker": "daku", "expression": "flirty", "text": "¿Se perdió, sargento? Este no parece su tipo de lugar." },
+    { "speaker": "rein", "expression": "neutral", "text": "Y sin embargo aquí estás tú." },
+    { "speaker": "daku", "expression": "smile", "text": "Yo vivo aquí, soldadito. Literalmente. Tú eres el que está fuera de lugar." },
+    { "speaker": "stage", "text": "Daku se desliza al asiento de enfrente. Se mueve como si el bar le perteneciera. En cierto modo, el bar le pertenece a él más que a nadie." },
+    { "speaker": "daku", "expression": "flirty", "text": "Llevas una semana preguntando por mí en media ciudad. Lo menos que podías hacer era mandar flores. O una nota. Algo con perfume." },
+    { "speaker": "rein", "expression": "neutral", "text": "No vine a—" },
+    { "speaker": "daku", "expression": "smile", "text": "¿A qué? ¿A verme? Porque estás viéndome. Y llevas haciéndolo desde que me senté." },
+    { "speaker": "stage", "text": "Pausa. Rein no lo niega." },
+    { "speaker": "daku", "expression": "flirty", "text": "Relájate, Diermissen. No muerdo. A menos que me lo pidas." },
+    { "speaker": "stage", "text": "Daku saca un cubilete de cuero con símbolos geométricos grabados. Lo pone sobre la mesa. Dentro, dados de marfil." },
+    { "speaker": "daku", "expression": "neutral", "text": "Farkle. ¿Conoces las reglas?" },
+    { "speaker": "rein", "expression": "neutral", "text": "Las conozco." },
+    { "speaker": "daku", "expression": "flirty", "text": "¿Y las de la versión sin ropa? Porque esas son las que me interesan." },
+    { "speaker": "stage", "text": "Pausa." },
+    { "speaker": "rein", "expression": "neutral", "text": "Aquí no." },
+    { "speaker": "daku", "expression": "smile", "text": "Obvio que aquí no. Aunque a mí no me molestaría. Pero tú tienes esa cosa de militar, ¿no? Decoro. Protocolo. Pudor." },
+    { "speaker": "stage", "text": "Se inclina hacia adelante." },
+    { "speaker": "daku", "expression": "flirty", "text": "Tengo una habitación arriba. La 7. Es cómoda. Tiene cama, mesa, y una cerradura que funciona. Todo lo que necesitamos." },
+    { "speaker": "stage", "text": "Pausa larga." },
+    { "speaker": "daku", "expression": "smile", "text": "¿O prefieres hablar de lo que viniste a hablar aquí abajo, rodeados de borrachos y putas? Porque puedo hablar. Pero a mí me gusta más hablar... en privado. Con menos ropa. Y más alcohol." },
+    { "speaker": "stage", "text": "Rein se levanta. No dice nada. Camina hacia las escaleras." },
+    { "speaker": "daku", "expression": "flirty", "text": "Nuri, preciosa, sube una botella a la 7." },
+    { "speaker": "nuri", "text": "¿La buena o la barata?" },
+    { "speaker": "daku", "expression": "smile", "text": "La buena. Esta noche lo vale." },
+    { "splash": "room_invite", "caption": "Escaleras. Daku sube detrás de Rein, mirándolo de arriba a abajo sin disimular. La luz del pasillo es más cálida, más íntima que el bar." }
+  ],
+
+  "act2": {
+    "intro": [
+      { "speaker": "stage", "text": "Habitación de la posada. Sencilla. Una mesa con dos sillas, una cama al fondo con sábanas arrugadas, una ventana con cortinas baratas. Una botella y dos vasos ya servidos por Nuri. Los dados de marfil sobre la mesa." },
+      { "speaker": "daku", "expression": "neutral", "text": "Siéntate. Nuri ya subió lo bueno." },
+      { "speaker": "stage", "text": "Rein se sienta. Mira los dados." },
+      { "speaker": "rein", "expression": "neutral", "text": "Antes de jugar. Los stakes." },
+      { "speaker": "daku", "expression": "smile", "text": "Directo como siempre. Me encanta eso de ti, sargento. Otros dan vueltas. Tú vas al hueso. Literalmente, a veces." },
+      { "speaker": "rein", "expression": "neutral", "text": "Daku." },
+      { "speaker": "daku", "expression": "flirty", "text": "Está bien, está bien. ¿Qué propones?" },
+      { "speaker": "rein", "expression": "neutral", "text": "El cónsul Esry Inerun. Desapareció hace seis semanas. Sin testigos. Sin denuncias." },
+      { "speaker": "daku", "expression": "neutral", "text": "Ajá." },
+      { "speaker": "rein", "expression": "neutral", "text": "Tú sabes dónde está." },
+      { "speaker": "daku", "expression": "smile", "text": "¿Eso es una acusación o un piropo?" }
+    ],
+    "choice": {
+      "options": [
+        { "label": "🗡️ Agresivo", "next": "esry_aggressive" },
+        { "label": "😐 Diplomático", "next": "esry_diplomatic" },
+        { "label": "😏 Directo", "next": "esry_direct" }
+      ]
+    },
+    "esry_aggressive": [
+      { "speaker": "rein", "expression": "smug", "text": "No me hagas perder el tiempo. Sé que tuviste contacto con Inerun antes de que desapareciera. Habla." },
+      { "speaker": "daku", "expression": "flirty", "text": "Mira nada más. El sargento sacando las garras. ¿Sabes que me pones cuando te pones mandón? Es algo que no puedo evitar." },
+      { "speaker": "rein", "expression": "neutral", "text": "Daku." },
+      { "speaker": "daku", "expression": "smile", "text": "Bien, bien. Si ganas... te doy lo que sé. Pero va a costarte, soldadito." }
+    ],
+    "esry_diplomatic": [
+      { "speaker": "rein", "expression": "neutral", "text": "No te estoy acusando. Pero si sabes algo, te pido que me lo digas." },
+      { "speaker": "daku", "expression": "surprised", "text": "¿Me lo pides? Reinhart Diermissen... pidiendo algo. A mí." },
+      { "speaker": "daku", "expression": "surprised", "text": "¿Sabes lo que eso me hace?" },
+      { "speaker": "rein", "expression": "neutral", "text": "..." },
+      { "speaker": "daku", "expression": "flirty", "text": "Me prende. Pero eso te lo digo después. Si ganas, hablo." }
+    ],
+    "esry_direct": [
+      { "speaker": "rein", "expression": "neutral", "text": "Inerun. ¿Qué sabes?" },
+      { "speaker": "daku", "expression": "neutral", "text": "Ni un saludo. Ni un cómo estás. Ni un \"bonita habitación\". Nunca cambias." },
+      { "speaker": "daku", "expression": "smile", "text": "Sé suficiente. Y te lo puedo dar. Si ganas." }
+    ],
+    "continuation": [
+      { "speaker": "rein", "expression": "neutral", "text": "¿Y si pierdo?" },
+      { "speaker": "daku", "expression": "flirty", "text": "Si pierdes... haces lo que yo quiera." },
+      { "speaker": "stage", "text": "Pausa." },
+      { "speaker": "rein", "expression": "neutral", "text": "Eso es vago." },
+      { "speaker": "daku", "expression": "smile", "text": "¿Vago? Sargento, llevo toda la noche diciéndote exactamente lo que quiero. Si te parece vago es porque no quieres admitir que lo entiendes perfectamente." },
+      { "speaker": "stage", "text": "Pausa larga. Rein lo mira." },
+      { "speaker": "rein", "expression": "neutral", "text": "Acepto." },
+      { "speaker": "daku", "expression": "flirty", "text": "Claro que aceptas. Porque la parte de ti que vino por Inerun es la misma parte de ti que subió esas escaleras sabiendo lo que iba a pasar." },
+      { "speaker": "rein", "expression": "smug", "text": "Tira los dados, Daku." },
+      { "speaker": "daku", "expression": "smile", "text": "Con mucho gusto, sargento." },
+      { "speaker": "stage", "text": "Daku recoge los dados de marfil. Los hace rodar entre sus dedos largos — dedos de pianista." },
+      { "speaker": "daku", "expression": "flirty", "text": "Seis dados. Seis prendas. El que se quede sin nada encima... pierde. ¿Listo?" },
+      { "speaker": "rein", "expression": "neutral", "text": "Listo." },
+      { "speaker": "daku", "expression": "smile", "text": "Una cosa más. Nuri dejó la botella llena. Sugiero que la usemos. La noche es larga." }
+    ]
+  },
+
+  "act3": {
+    "start": [
+      { "speaker": "daku", "expression": "flirty", "text": "Primera ronda. Aprovecha que todavía estamos presentables. No va a durar." }
+    ],
+
+    "rein_taunts": {
+      "provoke": {
+        "clothed": [
+          "Tira de una vez.",
+          "Creí que eras mejor con las manos.",
+          "No necesito suerte para ganarte.",
+          "Mucho hablas y poco tiras.",
+          "Sigue así y esto va a ser corto."
+        ],
+        "half_stripped": [
+          "¿Así de rápido te quedas sin opciones?",
+          "Te queda menos que apostar.",
+          "Pensé que ibas a ser un desafío.",
+          "Ya empezaste a temblar o es el frío.",
+          "Sigue perdiendo. Te queda bien."
+        ],
+        "nearly_naked": [
+          "Un par de tiros más y se acabó.",
+          "¿Quieres rendirte o prefieres que termine yo?",
+          "Sin la ropa se te acabaron los trucos.",
+          "Ya no tienes dónde esconder tu orgullo.",
+          "Esto fue más fácil de lo que esperaba."
+        ]
+      },
+      "flirt": {
+        "clothed": [
+          "¿Siempre seduces a los sargentos o soy especial?",
+          "Los dados no son lo único que estoy mirando.",
+          "Interesante forma de pasar la noche.",
+          "Debo admitir que tienes buenas manos.",
+          "Si juegas como coqueteas, ya perdiste."
+        ],
+        "half_stripped": [
+          "Te va mejor sin tanta ropa.",
+          "Empiezo a pensar que perder no es tan malo.",
+          "¿Es el alcohol o realmente te ves así?",
+          "Podría acostumbrarme a esta vista.",
+          "Cada prenda que pierdes mejora mi noche."
+        ],
+        "nearly_naked": [
+          "Si la idea era distraerme... funciona.",
+          "Gane o pierda, creo que ya gané.",
+          "Ya casi no queda nada que imaginar.",
+          "No sé si quiero que te quites lo que queda o si quiero hacerlo yo.",
+          "Sigue así y no vamos a necesitar un ganador."
+        ]
+      },
+      "stoic": {
+        "clothed": [
+          "...",
+          "Tu turno.",
+          "(Rein toma un trago sin decir nada.)",
+          "Sigue.",
+          "(Silencio.)"
+        ],
+        "half_stripped": [
+          "(Rein lo mira. No dice nada. Bebe.)",
+          "...",
+          "Tira.",
+          "(Sus ojos bajan un segundo. Los sube.)",
+          "(Silencio. Solo los dados.)"
+        ],
+        "nearly_naked": [
+          "(Rein no dice nada. Lo mira fijo.)",
+          "...",
+          "(Traga. No es por el alcohol.)",
+          "(Sus ojos. Solo sus ojos.)",
+          "(Silencio absoluto. Pero la habitación se siente más pequeña.)"
+        ]
+      }
+    },
+
+    "daku_taunts": {
+      "vs_provoke": {
+        "clothed": [
+          "Mejor con las manos, dice el sargento. Cariño, no tienes idea de lo que hago con las manos.",
+          "¿Corto? No me conoces. Yo me tomo mi tiempo. Con todo.",
+          "Me encanta tu confianza. Espero que te dure más que tu ropa.",
+          "Mucho hablo, dice. Pero no me estás callando, ¿verdad?",
+          "La última persona que me dijo eso terminó rogándome. Pero esa es otra historia."
+        ],
+        "half_stripped": [
+          "¿Sin opciones? Sargento, mírame. Yo soy la opción.",
+          "¿Temblar? No tiemblo de frío, Diermissen. Y tú lo sabes.",
+          "Me queda bien perder... Imagínate cómo me queda ganar.",
+          "¿Desafío? Aún no he empezado. Esto es el calentamiento.",
+          "Te noto la voz distinta. ¿Seguro que sigues pensando en Inerun?"
+        ],
+        "nearly_naked": [
+          "¿Se acabaron los trucos? Soldadito, los mejores trucos me los guardo para después del juego.",
+          "¿Mi orgullo? Mi orgullo no necesita ropa. ¿El tuyo?",
+          "¿Fácil? Si fuera fácil no estarías sudando.",
+          "¿Rendirme? ¿Y perderme la cara que vas a poner cuando me quite esto último? Ni muerto.",
+          "Dices que quieres que termine. Tu cuerpo dice otra cosa, sargento."
+        ]
+      },
+      "vs_flirt": {
+        "clothed": [
+          "¿Si eres especial? Estás en mi habitación, ¿no? No traigo a cualquiera aquí.",
+          "Mira todo lo que quieras. No cobro. Bueno, a ti no.",
+          "Buenas manos... me gusta que te fijes en eso. Sí son buenas. Para muchas cosas.",
+          "¿Si juego como coqueteo? Sargento, si yo jugara como coqueteo, ya estarías en esa cama.",
+          "Cada vez que dices algo así, los dados me importan menos."
+        ],
+        "half_stripped": [
+          "¿Me va mejor sin ropa? Qué amable. Quítatela tú también y estamos a mano.",
+          "El alcohol ayuda a decir lo que ya pensabas. ¿Qué más estás pensando?",
+          "¿Acostumbrarte a la vista? Puedo darte una vista mucho mejor. Solo tienes que perder una ronda más.",
+          "Cada prenda que pierdo es una que no vas a tener que quitarme después.",
+          "Mmmm. Sigue hablándome así y voy a perder a propósito."
+        ],
+        "nearly_naked": [
+          "¿Distraerte? Sargento, si quisiera distraerte de verdad, me habría parado de esta silla hace rato.",
+          "Quitarte lo que queda tú... ¿Sabes qué? Gana. Gana y hazlo.",
+          "¿No necesitamos ganador? Por fin dices algo inteligente.",
+          "Ya no queda nada que imaginar, dices. Pero lo último siempre sorprende.",
+          "Si hubieras dicho eso al principio nos habríamos ahorrado el juego. Pero me gusta el juego."
+        ]
+      },
+      "vs_stoic": {
+        "clothed": [
+          "Ese silencio tuyo me dice más que cualquier cosa que hayas dicho en toda la noche.",
+          "El tipo fuerte y callado. Clásico. ¿Sabes lo que le hace eso a alguien como yo?",
+          "No hablas. Bien. Me gusta llenar los silencios. Y los lleno bien.",
+          "Tus ojos hablan por ti, sargento. Y lo que dicen es indecente.",
+          "Cada vez que callas, me dan más ganas de hacerte ruido."
+        ],
+        "half_stripped": [
+          "Esa mirada... Crees que no te leo, ¿verdad? Pero yo te leo entero.",
+          "Sigues sin hablar pero llevas tres tragos. Algo te está pasando. Lo huelo.",
+          "Tus ojos bajaron. Los conté. Medio segundo en mi pecho. ¿Quieres que me voltee para que mires mejor?",
+          "Tu silencio ya no suena a disciplina. Suena a hambre.",
+          "Un trago más y te vas a romper, sargento. Y quiero estar aquí cuando pase."
+        ],
+        "nearly_naked": [
+          "No necesitas decir nada. Tu cuerpo lleva hablando desde la tercera ronda.",
+          "Ese silencio ya no es estoicismo. Es tensión. De la buena.",
+          "Mírame todo lo que quieras. Pronto no vas a tener que disimular.",
+          "¿Sabes qué es lo más erótico de ti? Que puedo sentir todo lo que contienes. Todo. Y sé que cuando dejes de contenerlo...",
+          "Te estás mordiendo el labio, sargento. No sé si lo sabes, pero lo estás haciendo."
+        ]
+      }
+    },
+
+    "daku_loses_garment": {
+      "jacket": ["Hacía calor de todas formas. Además, me veo mejor sin ella. Admítelo."],
+      "shoes": ["Descalzo. Más íntimo, ¿no? Como si estuviéramos en casa."],
+      "socks": ["¿Contento? ¿O necesitas más? Porque tengo más."],
+      "shirt": ["Ahí tienes, sargento. Todo tuyo. Bueno, la vista. Lo demás... todavía hay que ganarlo."],
+      "pants": ["¿Sabes cuánta gente pagaría por verme así? Y tú lo tienes gratis. Bueno, al precio de un juego de dados."],
+      "underwear": ["..."]
+    },
+
+    "rein_loses_garment": {
+      "jacket": ["Por fin. Esa chaqueta militar escondía demasiado. Es casi un crimen."],
+      "shoes": ["Descalzo en mi habitación. Esto se pone doméstico. Me gusta."],
+      "socks": ["Poco a poco, soldadito. Poco a poco. No te voy a apurar... aunque ganas no me faltan."],
+      "shirt": ["Vaya, vaya... Sargento Diermissen. Tanto tiempo en la guardia te ha tratado muy, muy bien. Dios. Dame un segundo."],
+      "pants": ["Mira, voy a ser honesto contigo. Me está costando mucho concentrarme en los dados. Y creo que es obvio por qué."],
+      "underwear": ["..."]
+    },
+
+    "cheat_caught": [
+      [
+        { "speaker": "rein", "expression": "smug", "text": "Ese dado cambió." },
+        { "speaker": "daku", "expression": "surprised", "text": "..." },
+        { "speaker": "rein", "expression": "smug", "text": "Lo vi." },
+        { "speaker": "daku", "expression": "flirty", "text": "No sé de qué hablas. Pero si quieres revisarme... puedes revisar lo que quieras, sargento." },
+        { "speaker": "rein", "expression": "neutral", "text": "Pierdes el turno." },
+        { "speaker": "daku", "expression": "smile", "text": "Valió la pena intentarlo." }
+      ],
+      [
+        { "speaker": "rein", "expression": "smug", "text": "Telekinesis. Otra vez." },
+        { "speaker": "daku", "expression": "surprised", "text": "¿Cómo—? Estabas mirando el—" },
+        { "speaker": "rein", "expression": "neutral", "text": "Visión periférica." },
+        { "speaker": "daku", "expression": "flirty", "text": "Eso... eso es terriblemente atractivo. ¿Te lo han dicho? Un hombre que puede mirar dos cosas al mismo tiempo. Las posibilidades..." }
+      ],
+      [
+        { "speaker": "rein", "expression": "smug", "text": "Tramposo." },
+        { "speaker": "daku", "expression": "smile", "text": "¿Tramposo? Soy creativo, sargento. Hay una diferencia." },
+        { "speaker": "rein", "expression": "neutral", "text": "No la hay." },
+        { "speaker": "daku", "expression": "flirty", "text": "Te la muestro después del juego. La diferencia entre trampa y creatividad. Es una lección práctica." }
+      ]
+    ],
+
+    "cheat_false": [
+      [
+        { "speaker": "daku", "expression": "smile", "text": "¿Trampa? Sargento, ese dado no se movió. ¿Cuánto llevas bebido?" },
+        { "speaker": "rein", "expression": "surprised", "text": "..." },
+        { "speaker": "daku", "expression": "flirty", "text": "Aunque me halaga que no puedas dejar de mirarme. Pero intenta mirar los dados de vez en cuando, ¿sí?" }
+      ],
+      [
+        { "speaker": "daku", "expression": "neutral", "text": "Mala lectura, Diermissen. Pierdes el turno." },
+        { "speaker": "rein", "expression": "surprised", "text": "..." },
+        { "speaker": "daku", "expression": "flirty", "text": "No te preocupes. Cuando esto termine, no va a importar quién ganó. Te lo prometo." }
+      ]
+    ],
+
+    "drink": {
+      "prompt": { "speaker": "daku", "expression": "smile", "text": "Otro trago. ¿Nervios, placer, o me necesitas más borroso para soportarme?" },
+      "options": [
+        { "label": "🗡️ \"Sed.\"", "expression": "smile", "reply": "Sed. Todos tenemos sed de algo, sargento. Tú no viniste hasta aquí por agua." },
+        { "label": "😏 \"Bajarme la temperatura.\"", "expression": "flirty", "reply": "¿Bajarte la temperatura? Cariño, yo puedo subirla y bajártela al mismo tiempo. Es un talento." },
+        { "label": "😐 (Beber sin responder.)", "expression": "flirty", "reply": "Ese silencio con un trago en la mano y sin camisa... ¿Tienes idea de cómo te ves? No. Claro que no. Eso lo hace peor." }
+      ],
+      "several": [
+        { "speaker": "daku", "expression": "flirty", "text": "Ya van tres. ¿Seguro que puedes seguir el ritmo?" },
+        { "speaker": "rein", "expression": "neutral", "text": "He tomado más que esto." },
+        { "speaker": "daku", "expression": "smile", "text": "No me refiero al alcohol, sargento." }
+      ],
+      "very_drunk": [
+        { "speaker": "daku", "expression": "smile", "text": "Tus ojos están vidriosos. ¿Ves bien los dados?" },
+        { "speaker": "rein", "expression": "surprised", "text": "Veo perfecto." },
+        { "speaker": "daku", "expression": "flirty", "text": "¿Y a mí? ¿También me ves perfecto? Porque yo a ti sí. Y cada trago te pone peor. O mejor, depende de cómo se mire." },
+        { "speaker": "rein", "expression": "surprised", "text": "...Cállate y tira." },
+        { "speaker": "daku", "expression": "smile", "text": "¿Eso fue una orden? Me encantan las órdenes, sargento. Sobre todo cuando vienen de ti. Sobre todo en una cama. Pero la mesa también sirve." }
+      ]
+    },
+
+    "double_or_nothing": {
+      "propose": { "speaker": "daku", "expression": "flirty", "text": "Propuesta. Esta ronda, doble o nada. El que pierda se quita dos. ¿Te atreves o te da miedo quedarte en nada delante de mí?" },
+      "options": [
+        { "label": "🗡️ \"¿Tan desesperado estás?\"", "accept": true, "expression": "flirty", "reply": "¿Desesperado? No, sargento. Impaciente. Hay una diferencia enorme. La primera es patética. La segunda es que te quiero desnudo ya." },
+        { "label": "😏 \"¿Tienes prisa por verme sin ropa?\"", "accept": true, "expression": "flirty", "reply": "¿Se nota mucho? Llevo teniéndote ganas desde que te sentaste en ese bar. Los dados son la excusa más elegante que se me ocurrió." },
+        { "label": "😐 \"Acepto.\"", "accept": true, "expression": "smile", "reply": "Sin dudarlo. Sin pensarlo. Eso me dice todo lo que necesito saber sobre lo que quieres esta noche, Diermissen." },
+        { "label": "❌ \"No.\"", "accept": false, "expression": "smile", "reply": "Cobarde. Es broma. Más o menos. Sigamos como estábamos, sargento." }
+      ]
+    }
+  },
+
+  "act4": {
+    "rein_wins": [
+      { "speaker": "stage", "text": "Último tiro. Daku perdió." },
+      { "speaker": "daku", "expression": "neutral", "text": "..." },
+      { "speaker": "stage", "text": "Silencio. Por un segundo, el personaje que siempre tiene algo que decir no tiene nada." },
+      { "speaker": "daku", "expression": "smile", "text": "Bien jugado, sargento." },
+      { "speaker": "stage", "text": "Daku se levanta. Camina hasta un cajón. Se mueve sin vergüenza — lleva una sola prenda. Saca un papel doblado y lo desliza sobre la mesa." },
+      { "speaker": "rein", "expression": "neutral", "text": "¿Qué es esto?" },
+      { "speaker": "daku", "expression": "neutral", "text": "Lo que pediste. Inerun." },
+      { "speaker": "stage", "text": "Rein lo abre. Lee. Frunce el ceño." },
+      { "speaker": "rein", "expression": "surprised", "text": "Esto no es una ubicación. Es un acertijo." },
+      { "speaker": "daku", "expression": "smile", "text": "Dije que te daría lo que sé. No dije que te lo iba a masticar." },
+      { "speaker": "rein", "expression": "smug", "text": "No es lo que acordamos." },
+      { "speaker": "daku", "expression": "flirty", "text": "¿Quieres discutirlo? ¿Ahora? ¿Conmigo así?" },
+      { "speaker": "stage", "text": "Pausa. Rein guarda el papel. Mira a Daku. Daku está de pie, la piel dorada bajo la luz de la lámpara. Sonríe como si hubiera ganado." },
+      { "speaker": "daku", "expression": "flirty", "text": "La puerta está ahí, sargento. Pero no te estás levantando." },
+      { "speaker": "stage", "text": "Silencio." },
+      { "speaker": "daku", "expression": "flirty", "text": "Y la cama está aquí." },
+      { "speaker": "stage", "text": "Rein se levanta. No camina hacia la puerta." },
+      { "speaker": "rein", "expression": "flirty", "text": "..." },
+      { "speaker": "daku", "expression": "smile", "text": "Lo sabía. Desde que subiste esas escaleras, lo sabía." },
+      { "splash": "ending_rein_wins", "caption": "[NSFW — Rein top]" }
+    ],
+    "daku_wins": [
+      { "speaker": "stage", "text": "Último tiro. Rein perdió." },
+      { "speaker": "stage", "text": "Silencio." },
+      { "speaker": "daku", "expression": "flirty", "text": "Bueno, bueno, bueno." },
+      { "speaker": "stage", "text": "Se toma un segundo para mirar a Rein. Despacio. De arriba a abajo. Sin disimular." },
+      { "speaker": "rein", "expression": "neutral", "text": "Tu premio. ¿Qué quieres?" },
+      { "speaker": "stage", "text": "Daku se levanta. Rodea la mesa. Se detiene detrás de Rein — como cuando se le acercó en el bar. Una mano en el respaldo. La boca cerca de su oído." },
+      { "speaker": "daku", "expression": "flirty", "text": "Lo que siempre quise, sargento. Desde la primera vez que te vi con ese uniforme rígido y esa cara de que el mundo te debe algo." },
+      { "speaker": "rein", "expression": "surprised", "text": "..." },
+      { "speaker": "daku", "expression": "neutral", "text": "Esto no es un premio. Es una elección. Mía. ¿Entiendes? Mía." },
+      { "speaker": "stage", "text": "Algo cambia en su voz. Solo un instante. Algo real debajo de todo el juego." },
+      { "speaker": "rein", "expression": "neutral", "text": "...Lo entiendo." },
+      { "speaker": "daku", "expression": "smile", "text": "Bien." },
+      { "splash": "ending_daku_wins", "caption": "[NSFW — Daku top]" }
+    ],
+    "tie": [
+      { "speaker": "stage", "text": "Los dados caen. Empate perfecto. Los dos pierden la última prenda al mismo tiempo." },
+      { "speaker": "daku", "expression": "surprised", "text": "..." },
+      { "speaker": "rein", "expression": "surprised", "text": "..." },
+      { "speaker": "stage", "text": "Los dos de pie. La mesa entre ellos." },
+      { "speaker": "daku", "expression": "smile", "text": "Esto no estaba en las reglas." },
+      { "speaker": "rein", "expression": "neutral", "text": "Nadie ganó." },
+      { "speaker": "daku", "expression": "flirty", "text": "Nadie perdió tampoco. ¿Y ahora qué, sargento? ¿Consultamos el manual?" },
+      { "speaker": "stage", "text": "Pausa." },
+      { "speaker": "rein", "expression": "neutral", "text": "¿Qué propones?" },
+      { "speaker": "daku", "expression": "flirty", "text": "Algo que no necesita ganador ni perdedor. Algo... simétrico. ¿Me sigues?" },
+      { "speaker": "stage", "text": "Pausa larga." },
+      { "speaker": "daku", "expression": "smile", "text": "Por la cara que estás poniendo, diría que me sigues perfectamente." },
+      { "splash": "ending_tie", "caption": "[NSFW — empate]" }
+    ],
+    "all_caught": [
+      { "speaker": "stage", "text": "Rein acusó cada trampa. Ninguna falsa acusación." },
+      { "speaker": "daku", "expression": "surprised", "text": "..." },
+      { "speaker": "stage", "text": "Daku está quieto. No sonríe. La máscara se cayó." },
+      { "speaker": "daku", "expression": "neutral", "text": "Las viste todas." },
+      { "speaker": "rein", "expression": "neutral", "text": "Todas." },
+      { "speaker": "daku", "expression": "neutral", "text": "¿Cómo? ¿Cómo es posible? Nadie— Nunca nadie—" },
+      { "speaker": "rein", "expression": "neutral", "text": "Te estaba mirando." },
+      { "speaker": "daku", "expression": "neutral", "text": "No. Todos me miran. Todos. Todo el tiempo. Pero tú... tú me estabas viendo. De verdad." },
+      { "speaker": "stage", "text": "Silencio largo. Daku baja la mirada. Cuando la sube, no hay sonrisa. No hay coqueteo. No hay juego." },
+      { "speaker": "daku", "expression": "neutral", "text": "¿Sabes lo que se siente? ¿Que alguien vea cada truco? ¿Cada movimiento? No se siente como perder un juego. Se siente como... estar desnudo. Y no hablo de la ropa. La ropa da igual." },
+      { "speaker": "stage", "text": "Pausa." },
+      { "speaker": "daku", "expression": "neutral", "text": "Petri nunca me vio así. Ella ve lo que uso. Lo que hago. No lo que soy. Nadie ve lo que soy." },
+      { "speaker": "stage", "text": "Su voz se quiebra un milímetro. Lo controla." },
+      { "speaker": "daku", "expression": "neutral", "text": "No me mires así, Diermissen." },
+      { "speaker": "rein", "expression": "neutral", "text": "¿Así cómo?" },
+      { "speaker": "daku", "expression": "neutral", "text": "Como si me conocieras." },
+      { "speaker": "stage", "text": "Silencio." },
+      { "speaker": "rein", "expression": "neutral", "text": "¿Y si te conozco?" },
+      { "speaker": "stage", "text": "Daku no tiene respuesta. Se acerca despacio. Sin juegos. Sin actuación. Solo él." },
+      { "splash": "ending_all_caught", "caption": "[Escena íntima. Suave. Vulnerable. Diferente a todos los otros endings.]" }
+    ],
+    "none_caught": [
+      { "speaker": "daku", "expression": "smile", "text": "Buena partida, soldadito. Un poco fácil, pero buena." },
+      { "speaker": "stage", "text": "Pausa. Rein no dice nada." },
+      { "speaker": "daku", "expression": "neutral", "text": "¿No me vas a decir que hice trampa?" },
+      { "speaker": "rein", "expression": "neutral", "text": "No." },
+      { "speaker": "daku", "expression": "neutral", "text": "¿Por qué no?" },
+      { "speaker": "stage", "text": "Silencio." },
+      { "speaker": "rein", "expression": "neutral", "text": "Porque ya lo sé." },
+      { "speaker": "stage", "text": "La sonrisa de Daku se congela." },
+      { "speaker": "daku", "expression": "surprised", "text": "...¿Qué?" },
+      { "speaker": "rein", "expression": "neutral", "text": "El tercer tiro. El quinto. El octavo. El del doble o nada." },
+      { "speaker": "daku", "expression": "surprised", "text": "Los viste." },
+      { "speaker": "rein", "expression": "neutral", "text": "Los vi todos." },
+      { "speaker": "daku", "expression": "neutral", "text": "¿Todos? ¿Y no dijiste nada? ¿Por qué?" },
+      { "speaker": "stage", "text": "Pausa larga. Rein lo mira directamente." },
+      { "speaker": "rein", "expression": "neutral", "text": "Porque no vine a ganar." },
+      { "speaker": "stage", "text": "Silencio absoluto." },
+      { "speaker": "daku", "expression": "neutral", "text": "...Sabías. Desde el principio." },
+      { "speaker": "rein", "expression": "neutral", "text": "Desde el principio." },
+      { "speaker": "daku", "expression": "neutral", "text": "Sabías y dejaste que yo... todo esto... las trampas, el juego, el—" },
+      { "speaker": "rein", "expression": "neutral", "text": "Sí." },
+      { "speaker": "daku", "expression": "neutral", "text": "Entonces yo nunca tuve el control." },
+      { "speaker": "rein", "expression": "neutral", "text": "No." },
+      { "speaker": "stage", "text": "Daku lo mira. Algo se desarma. Todo lo que fue esta noche — la sonrisa, las trampas, la seducción, el juego — fue de Daku. Y de pronto no. De pronto nunca lo fue." },
+      { "speaker": "daku", "expression": "neutral", "text": "¿Por qué?" },
+      { "speaker": "rein", "expression": "neutral", "text": "Porque quería que eligieras." },
+      { "speaker": "stage", "text": "Silencio." },
+      { "speaker": "stage", "text": "Y Daku entiende. Rein le dio el control a propósito. Le dio la victoria. No porque no pudiera ganar — sino porque quería que Daku tuviera la elección. La elección que nunca tiene." },
+      { "speaker": "stage", "text": "Por primera vez en la noche, es Rein quien se acerca." },
+      { "splash": "ending_none_caught", "caption": "[NSFW — el poder se invirtió, pero no por la fuerza. Por la entrega.]" }
+    ]
+  },
+
+  "credits": [
+    { "speaker": "narrator", "text": "La Estrella de Mar cerró esa noche como cualquier otra. Los borrachos se fueron a sus casas. Las cartas se guardaron. Y los dados de marfil quedaron sobre la mesa de la habitación 7." },
+    { "speaker": "narrator", "text": "Nadie preguntó por ellos." },
+    { "speaker": "narrator", "text": "Nadie nunca pregunta por lo que pasa en la 7." }
+  ]
+}

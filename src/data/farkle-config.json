@@ -1,0 +1,15 @@
+{
+  "round_target": 2000,
+  "cheat_probability": 0.25,
+  "ai_aggression": 0.6,
+  "starting_emp": 5,
+  "max_emp": 5,
+  "emp_per_drink": 1,
+  "sobriety_loss_per_drink": 0.2,
+  "clothing_order": ["shirt", "pants", "underwear"],
+  "dice_count": 6,
+  "double_or_nothing_threshold": 3,
+  "cheat_flash_ms_sober": 520,
+  "cheat_flash_ms_drunk": 170,
+  "none_caught_min_cheats": 3
+}
