@@ -115,7 +115,11 @@
           "Te queda menos que apostar.",
           "Pensé que ibas a ser un desafío.",
           "Ya empezaste a temblar o es el frío.",
-          "Sigue perdiendo. Te queda bien."
+          "Sigue perdiendo. Te queda bien.",
+          [
+            { "speaker": "rein", "expression": "smug", "text": "Sigue provocándome, Daku. Quiero ver si mantienes esa sonrisa cuando te toque perder otra." },
+            { "speaker": "daku", "expression": "flirty", "text": "Haz que pierda, Diermissen. Después hablamos." }
+          ]
         ],
         "nearly_naked": [
           "Un par de tiros más y se acabó.",
@@ -187,7 +191,11 @@
           "¿Temblar? No tiemblo de frío, Diermissen. Y tú lo sabes.",
           "Me queda bien perder... Imagínate cómo me queda ganar.",
           "¿Desafío? Aún no he empezado. Esto es el calentamiento.",
-          "Te noto la voz distinta. ¿Seguro que sigues pensando en Inerun?"
+          "Te noto la voz distinta. ¿Seguro que sigues pensando en Inerun?",
+          [
+            { "speaker": "daku", "expression": "flirty", "text": "¿Qué pasa, sargento? Llevas un rato mirando más mis piernas que los dados." },
+            { "speaker": "rein", "expression": "neutral", "text": "No necesito fingir que no me gustan." }
+          ]
         ],
         "nearly_naked": [
           "¿Se acabaron los trucos? Soldadito, los mejores trucos me los guardo para después del juego.",
@@ -248,20 +256,23 @@
     "big_score": {
       "_comentario": "Cuando alguien saca mas de big_score_threshold puntos en UN solo apartado. Habla primero quien puntuo y contesta el otro. Si una lista esta vacia, esa linea no se dice; si lo estan las dos, no pasa nada y el turno sigue igual.",
       "rein": {
-        "rein": [],
-        "daku": []
+        "rein": ["Hablas demasiado para alguien al que ya le quedan tan pocas prendas."],
+        "daku": ["Y aun así sigues esperando que pierda otra."]
       },
       "daku": {
-        "daku": [],
-        "rein": []
+        "daku": ["Qué pena, soldadito. Parece que vas a tener que enseñarme un poco más de piel."],
+        "rein": ["Si querías verme desnudo, podías haberlo dicho desde el principio."]
       }
     },
 
     "daku_loses_garment": {
-      "shoes": ["Descalzo. Más íntimo, ¿no? Como si estuviéramos en casa."],
       "shirt": [
         "Ahí tienes, sargento. Todo tuyo. Bueno, la vista. Lo demás... todavía hay que ganarlo.",
-        "Hacía calor de todas formas. Además, me veo mejor sin ella. Admítelo."
+        "Hacía calor de todas formas. Además, me veo mejor sin ella. Admítelo.",
+        [
+          { "speaker": "daku", "expression": "flirty", "text": "Disfrútalo, Diermissen. No todos los días tienes permiso para mirarme así." },
+          { "speaker": "rein", "expression": "smug", "text": "No necesitaba permiso. Solo una buena excusa." }
+        ]
       ],
       "pants": [
         "¿Sabes cuánta gente pagaría por verme así? Y tú lo tienes gratis. Bueno, al precio de un juego de dados.",
@@ -271,10 +282,13 @@
     },
 
     "rein_loses_garment": {
-      "shoes": ["Descalzo en mi habitación. Esto se pone doméstico. Me gusta."],
       "shirt": [
         "Vaya, vaya... Sargento Diermissen. Tanto tiempo en la guardia te ha tratado muy, muy bien. Dios. Dame un segundo.",
-        "Por fin. Esa chaqueta militar escondía demasiado. Es casi un crimen."
+        "Por fin. Esa chaqueta militar escondía demasiado. Es casi un crimen.",
+        [
+          { "speaker": "rein", "expression": "neutral", "text": "No te emociones demasiado. Todavía llevo suficiente encima para hacerte trabajar por el resto." },
+          { "speaker": "daku", "expression": "flirty", "text": "Perfecto, sargento. Me aburriría si fueras fácil." }
+        ]
       ],
       "pants": [
         "Mira, voy a ser honesto contigo. Me está costando mucho concentrarme en los dados. Y creo que es obvio por qué.",
