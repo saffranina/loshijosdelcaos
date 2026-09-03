@@ -90,7 +90,7 @@
       { "speaker": "rein", "expression": "smug", "text": "Tira los dados, Daku." },
       { "speaker": "daku", "expression": "smile", "text": "Con mucho gusto, sargento." },
       { "speaker": "stage", "text": "Daku recoge los dados de marfil. Los hace rodar entre sus dedos largos — dedos de pianista." },
-      { "speaker": "daku", "expression": "flirty", "text": "Seis dados. Seis prendas. El que se quede sin nada encima... pierde. ¿Listo?" },
+      { "speaker": "daku", "expression": "flirty", "text": "Seis dados. Tres prendas. Menos ropa que dados, sargento. Hazte a la idea. El que se quede sin nada encima... pierde." },
       { "speaker": "rein", "expression": "neutral", "text": "Listo." },
       { "speaker": "daku", "expression": "smile", "text": "Una cosa más. Nuri dejó la botella llena. Sugiero que la usemos. La noche es larga." }
     ]

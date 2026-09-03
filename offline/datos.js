@@ -365,7 +365,7 @@ window.LDC_DATOS = {
     {
      "speaker": "daku",
      "expression": "flirty",
-     "text": "Seis dados. Seis prendas. El que se quede sin nada encima... pierde. ¿Listo?"
+     "text": "Seis dados. Tres prendas. Menos ropa que dados, sargento. Hazte a la idea. El que se quede sin nada encima... pierde."
     },
     {
      "speaker": "rein",
