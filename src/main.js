@@ -7,6 +7,7 @@ import { Act2Scene } from './scenes/Act2Scene.js';
 import { TutorialScene } from './scenes/TutorialScene.js';
 import { FarkleScene } from './scenes/FarkleScene.js';
 import { EndingScene } from './scenes/EndingScene.js';
+import { AchievementsScene } from './scenes/AchievementsScene.js';
 
 // El juego abierto con doble clic, sin servidor (ver tools/empaquetar.py).
 const SIN_SERVIDOR = location.protocol === 'file:';
@@ -38,7 +39,7 @@ const config = {
     mode: Phaser.Scale.NONE,
     autoCenter: Phaser.Scale.NO_CENTER,
   },
-  scene: [BootScene, TitleScene, Act1Scene, Act2Scene, TutorialScene, FarkleScene, EndingScene],
+  scene: [BootScene, TitleScene, Act1Scene, Act2Scene, TutorialScene, FarkleScene, EndingScene, AchievementsScene],
 
   // El paquete que se le pasa a alguien para jugar sin instalar nada se abre
   // con doble clic, o sea con la dirección file:// (ver tools/empaquetar.py).

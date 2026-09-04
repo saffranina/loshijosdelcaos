@@ -1,5 +1,8 @@
 // GameState.js — estado global de la partida. Un solo objeto compartido entre escenas.
 
+import { difficultyConfig } from './Mechanics.js';
+import { Achievements } from './Achievements.js';
+
 export const GARMENTS = ['shirt', 'pants', 'underwear'];
 
 export const GARMENT_ES = {
@@ -14,6 +17,9 @@ export const GARMENT_ES = {
 class State {
   constructor() {
     this.config = null;
+    this.baseConfig = null;
+    this.mechanics = null;
+    this.selectedDifficulty = 'normal';
     this.dialogues = null;
     this.reset();
   }
@@ -33,7 +39,7 @@ class State {
     // Recursos
     this.emp = c.starting_emp ?? 3;
     this.maxEmp = c.max_emp ?? 5;
-    this.sobriety = 1.0;          // 1 = lúcido, 0 = destruido
+    this.sobriety = c.starting_sobriety ?? 1.0;
     this.drinks = 0;
 
     // Partida
@@ -51,6 +57,19 @@ class State {
 
     this.ending = null;
     this.prelude = null;
+    this.achievementsFinalized = false;
+  }
+
+  setDifficulty(key) {
+    this.selectedDifficulty = key;
+    this.config = difficultyConfig(this.baseConfig || this.config || {}, this.mechanics, key);
+    return this.config;
+  }
+
+  startNewGame() {
+    this.setDifficulty(this.selectedDifficulty);
+    this.reset(this.config);
+    Achievements.beginRun(this.selectedDifficulty);
   }
 
   // ---- ropa ----

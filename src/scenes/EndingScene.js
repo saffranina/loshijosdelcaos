@@ -6,6 +6,7 @@ import { VNScene } from './VNScene.js';
 import { makeButton } from '../systems/Ui.js';
 import { GameState } from '../systems/GameState.js';
 import { playMusic } from '../systems/Music.js';
+import { Achievements } from '../systems/Achievements.js';
 
 const TITLES = {
   rein_wins:   'Rein gana',
@@ -28,6 +29,10 @@ export class EndingScene extends VNScene {
     this.buildStage();
 
     const key = GameState.ending || 'daku_wins';
+    if (!GameState.achievementsFinalized) {
+      GameState.achievementsFinalized = true;
+      Achievements.finish(key, GameState);
+    }
     playMusic(this, key === 'drunk_game_over' ? 'music_gameover' : 'music_endings');
     const act4 = GameState.dialogues.act4;
     const base = key === 'drunk_game_over' ? DRUNK_GAME_OVER : act4[key];

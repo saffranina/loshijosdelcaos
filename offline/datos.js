@@ -994,81 +994,10 @@ window.LDC_DATOS = {
      "caption": "[NSFW — Daku top]"
     }
    ],
-   "tie": [
+   "all_caught_prelude": [
     {
      "speaker": "stage",
-     "text": "Los dados caen. Empate perfecto. Los dos pierden la última prenda al mismo tiempo."
-    },
-    {
-     "speaker": "daku",
-     "expression": "surprised",
-     "text": "..."
-    },
-    {
-     "speaker": "rein",
-     "expression": "surprised",
-     "text": "..."
-    },
-    {
-     "speaker": "stage",
-     "text": "Los dos de pie. La mesa entre ellos."
-    },
-    {
-     "speaker": "daku",
-     "expression": "smile",
-     "text": "Esto no estaba en las reglas."
-    },
-    {
-     "speaker": "rein",
-     "expression": "neutral",
-     "text": "Nadie ganó."
-    },
-    {
-     "speaker": "daku",
-     "expression": "flirty",
-     "text": "Nadie perdió tampoco. ¿Y ahora qué, sargento? ¿Consultamos el manual?"
-    },
-    {
-     "speaker": "stage",
-     "text": "Pausa."
-    },
-    {
-     "speaker": "rein",
-     "expression": "neutral",
-     "text": "¿Qué propones?"
-    },
-    {
-     "speaker": "daku",
-     "expression": "flirty",
-     "text": "Algo que no necesita ganador ni perdedor. Algo... simétrico. ¿Me sigues?"
-    },
-    {
-     "speaker": "stage",
-     "text": "Pausa larga."
-    },
-    {
-     "speaker": "daku",
-     "expression": "smile",
-     "text": "Por la cara que estás poniendo, diría que me sigues perfectamente."
-    },
-    {
-     "splash": "ending_tie",
-     "caption": "[NSFW — empate]"
-    }
-   ],
-   "all_caught": [
-    {
-     "speaker": "stage",
-     "text": "Rein acusó cada trampa. Ninguna falsa acusación."
-    },
-    {
-     "speaker": "daku",
-     "expression": "surprised",
-     "text": "..."
-    },
-    {
-     "speaker": "stage",
-     "text": "Daku está quieto. No sonríe. La máscara se cayó."
+     "text": "Antes de que ninguno se mueva, Daku se detiene."
     },
     {
      "speaker": "daku",
@@ -1082,8 +1011,8 @@ window.LDC_DATOS = {
     },
     {
      "speaker": "daku",
-     "expression": "neutral",
-     "text": "¿Cómo? ¿Cómo es posible? Nadie— Nunca nadie—"
+     "expression": "surprised",
+     "text": "¿Cómo? Nadie— nunca nadie—"
     },
     {
      "speaker": "rein",
@@ -1093,29 +1022,11 @@ window.LDC_DATOS = {
     {
      "speaker": "daku",
      "expression": "neutral",
-     "text": "No. Todos me miran. Todos. Todo el tiempo. Pero tú... tú me estabas viendo. De verdad."
+     "text": "No. Todos me miran. Tú me estabas viendo. De verdad."
     },
     {
      "speaker": "stage",
-     "text": "Silencio largo. Daku baja la mirada. Cuando la sube, no hay sonrisa. No hay coqueteo. No hay juego."
-    },
-    {
-     "speaker": "daku",
-     "expression": "neutral",
-     "text": "¿Sabes lo que se siente? ¿Que alguien vea cada truco? ¿Cada movimiento? No se siente como perder un juego. Se siente como... estar desnudo. Y no hablo de la ropa. La ropa da igual."
-    },
-    {
-     "speaker": "stage",
-     "text": "Pausa."
-    },
-    {
-     "speaker": "daku",
-     "expression": "neutral",
-     "text": "Petri nunca me vio así. Ella ve lo que uso. Lo que hago. No lo que soy. Nadie ve lo que soy."
-    },
-    {
-     "speaker": "stage",
-     "text": "Su voz se quiebra un milímetro. Lo controla."
+     "text": "Silencio. Cuando Daku habla, no sonríe."
     },
     {
      "speaker": "daku",
@@ -1131,30 +1042,13 @@ window.LDC_DATOS = {
      "speaker": "daku",
      "expression": "neutral",
      "text": "Como si me conocieras."
-    },
-    {
-     "speaker": "stage",
-     "text": "Silencio."
-    },
-    {
-     "speaker": "rein",
-     "expression": "neutral",
-     "text": "¿Y si te conozco?"
-    },
-    {
-     "speaker": "stage",
-     "text": "Daku no tiene respuesta. Se acerca despacio. Sin juegos. Sin actuación. Solo él."
-    },
-    {
-     "splash": "ending_all_caught",
-     "caption": "[Escena íntima. Suave. Vulnerable. Diferente a todos los otros endings.]"
     }
    ],
-   "none_caught": [
+   "none_caught_prelude": [
     {
      "speaker": "daku",
      "expression": "smile",
-     "text": "Buena partida, soldadito. Un poco fácil, pero buena."
+     "text": "Buena partida, soldadito."
     },
     {
      "speaker": "stage",
@@ -1176,10 +1070,6 @@ window.LDC_DATOS = {
      "text": "¿Por qué no?"
     },
     {
-     "speaker": "stage",
-     "text": "Silencio."
-    },
-    {
      "speaker": "rein",
      "expression": "neutral",
      "text": "Porque ya lo sé."
@@ -1196,7 +1086,7 @@ window.LDC_DATOS = {
     {
      "speaker": "rein",
      "expression": "neutral",
-     "text": "El tercer tiro. El quinto. El octavo. El del doble o nada."
+     "text": "El tercer tiro. El quinto. El octavo."
     },
     {
      "speaker": "daku",
@@ -1211,80 +1101,11 @@ window.LDC_DATOS = {
     {
      "speaker": "daku",
      "expression": "neutral",
-     "text": "¿Todos? ¿Y no dijiste nada? ¿Por qué?"
+     "text": "¿Y no dijiste nada?"
     },
     {
      "speaker": "stage",
-     "text": "Pausa larga. Rein lo mira directamente."
-    },
-    {
-     "speaker": "rein",
-     "expression": "neutral",
-     "text": "Porque no vine a ganar."
-    },
-    {
-     "speaker": "stage",
-     "text": "Silencio absoluto."
-    },
-    {
-     "speaker": "daku",
-     "expression": "neutral",
-     "text": "...Sabías. Desde el principio."
-    },
-    {
-     "speaker": "rein",
-     "expression": "neutral",
-     "text": "Desde el principio."
-    },
-    {
-     "speaker": "daku",
-     "expression": "neutral",
-     "text": "Sabías y dejaste que yo... todo esto... las trampas, el juego, el—"
-    },
-    {
-     "speaker": "rein",
-     "expression": "neutral",
-     "text": "Sí."
-    },
-    {
-     "speaker": "daku",
-     "expression": "neutral",
-     "text": "Entonces yo nunca tuve el control."
-    },
-    {
-     "speaker": "rein",
-     "expression": "neutral",
-     "text": "No."
-    },
-    {
-     "speaker": "stage",
-     "text": "Daku lo mira. Algo se desarma. Todo lo que fue esta noche — la sonrisa, las trampas, la seducción, el juego — fue de Daku. Y de pronto no. De pronto nunca lo fue."
-    },
-    {
-     "speaker": "daku",
-     "expression": "neutral",
-     "text": "¿Por qué?"
-    },
-    {
-     "speaker": "rein",
-     "expression": "neutral",
-     "text": "Porque quería que eligieras."
-    },
-    {
-     "speaker": "stage",
-     "text": "Silencio."
-    },
-    {
-     "speaker": "stage",
-     "text": "Y Daku entiende. Rein le dio el control a propósito. Le dio la victoria. No porque no pudiera ganar — sino porque quería que Daku tuviera la elección. La elección que nunca tiene."
-    },
-    {
-     "speaker": "stage",
-     "text": "Por primera vez en la noche, es Rein quien se acerca."
-    },
-    {
-     "splash": "ending_none_caught",
-     "caption": "[NSFW — el poder se invirtió, pero no por la fuerza. Por la entrega.]"
+     "text": "Rein no responde. No necesita hacerlo."
     }
    ]
   },
@@ -1321,6 +1142,600 @@ window.LDC_DATOS = {
   "double_or_nothing_threshold": 3,
   "cheat_flash_ms_sober": 520,
   "cheat_flash_ms_drunk": 170,
+  "all_caught_min_cheats": 1,
   "none_caught_min_cheats": 3
+ },
+ "mechanicsConfig": {
+  "achievements": {
+   "endings": {
+    "buen_soldado": {
+     "nombre": "Buen soldado",
+     "oculto": false,
+     "condicion": "rein_wins"
+    },
+    "mala_apuesta": {
+     "nombre": "Mala apuesta",
+     "oculto": false,
+     "condicion": "daku_wins"
+    },
+    "ojo_de_halcon": {
+     "nombre": "Ojo de halcón",
+     "oculto": false,
+     "condicion": "all_caught_prelude"
+    },
+    "sabias": {
+     "nombre": "Sabías",
+     "oculto": false,
+     "condicion": "none_caught_prelude"
+    },
+    "fondo_de_botella": {
+     "nombre": "Fondo de botella",
+     "oculto": false,
+     "condicion": "game_over_alcohol"
+    }
+   },
+   "farkle": {
+    "escalera_de_marfil": {
+     "nombre": "Escalera de marfil",
+     "oculto": false,
+     "condicion": "sacar_escalera_1_6"
+    },
+    "dados_calientes": {
+     "nombre": "Dados calientes",
+     "oculto": false,
+     "condicion": "puntuar_6_dados_y_seguir"
+    },
+    "seis_de_seis": {
+     "nombre": "Seis de seis",
+     "oculto": false,
+     "condicion": "puntuar_6_dados_un_tiro"
+    },
+    "codicia": {
+     "nombre": "Codicia",
+     "oculto": false,
+     "condicion": "farkle_con_mas_de_1000_acumulados"
+    },
+    "gallina": {
+     "nombre": "Gallina",
+     "oculto": false,
+     "condicion": "plantarse_con_menos_de_200"
+    },
+    "adicto_al_riesgo": {
+     "nombre": "Adicto al riesgo",
+     "oculto": false,
+     "condicion": "seguir_tirando_con_mas_de_1500"
+    },
+    "amenaza_triple": {
+     "nombre": "Amenaza triple",
+     "oculto": false,
+     "condicion": "tres_triples_en_partida"
+    },
+    "de_uno_en_uno": {
+     "nombre": "De uno en uno",
+     "oculto": false,
+     "condicion": "ganar_ronda_solo_1s_y_5s"
+    },
+    "impecable": {
+     "nombre": "Impecable",
+     "oculto": false,
+     "condicion": "ganar_sin_perder_prenda"
+    },
+    "remontada": {
+     "nombre": "Remontada",
+     "oculto": false,
+     "condicion": "ganar_con_2_prendas_perdidas"
+    },
+    "exhibicionista": {
+     "nombre": "Exhibicionista",
+     "oculto": false,
+     "condicion": "perder_prenda_ronda_1"
+    },
+    "partida_relampago": {
+     "nombre": "Partida relámpago",
+     "oculto": false,
+     "condicion": "terminar_en_3_rondas"
+    },
+    "conservador": {
+     "nombre": "Conservador",
+     "oculto": false,
+     "condicion": "ganar_ronda_un_solo_tiro"
+    },
+    "racha_perfecta": {
+     "nombre": "Racha perfecta",
+     "oculto": false,
+     "condicion": "ganar_3_rondas_seguidas"
+    }
+   },
+   "doble_o_nada": {
+    "todo_o_nada": {
+     "nombre": "Todo o nada",
+     "oculto": false,
+     "condicion": "ganar_ronda_doble_o_nada"
+    },
+    "mal_calculo": {
+     "nombre": "Mal cálculo",
+     "oculto": false,
+     "condicion": "perder_ronda_doble_o_nada"
+    },
+    "jugador_compulsivo": {
+     "nombre": "Jugador compulsivo",
+     "oculto": false,
+     "condicion": "proponer_doble_o_nada_3_veces"
+    },
+    "la_casa_siempre_gana": {
+     "nombre": "La casa siempre gana",
+     "oculto": false,
+     "condicion": "daku_propone_doble_o_nada_y_gana"
+    }
+   },
+   "trampas": {
+    "descarga": {
+     "nombre": "Descarga",
+     "oculto": false,
+     "condicion": "primera_acusacion_correcta"
+    },
+    "tercer_ojo": {
+     "nombre": "Tercer ojo",
+     "oculto": false,
+     "condicion": "3_acusaciones_correctas_en_partida"
+    },
+    "francotirador": {
+     "nombre": "Francotirador",
+     "oculto": false,
+     "condicion": "acusar_correctamente_con_1_emp"
+    },
+    "paranoico": {
+     "nombre": "Paranoico",
+     "oculto": false,
+     "condicion": "3_acusaciones_falsas_en_partida"
+    },
+    "gatillo_facil": {
+     "nombre": "Gatillo fácil",
+     "oculto": false,
+     "condicion": "acusar_sin_trampa_ronda_1"
+    },
+    "nunca_aprendes": {
+     "nombre": "Nunca aprendes",
+     "oculto": false,
+     "condicion": "2_acusaciones_falsas_seguidas"
+    },
+    "desarmado": {
+     "nombre": "Desarmado",
+     "oculto": false,
+     "condicion": "todo_emp_en_acusaciones_falsas"
+    },
+    "ciego_voluntario": {
+     "nombre": "Ciego voluntario",
+     "oculto": false,
+     "condicion": "terminar_sin_acusar"
+    },
+    "sin_bateria": {
+     "nombre": "Sin batería",
+     "oculto": false,
+     "condicion": "llegar_a_0_emp"
+    }
+   },
+   "alcohol": {
+    "sobrio": {
+     "nombre": "Sobrio",
+     "oculto": false,
+     "condicion": "ganar_sin_beber"
+    },
+    "una_mas": {
+     "nombre": "Una más",
+     "oculto": false,
+     "condicion": "beber_3_veces"
+    },
+    "catador": {
+     "nombre": "Catador",
+     "oculto": false,
+     "condicion": "beber_en_todas_las_rondas"
+    },
+    "brindis": {
+     "nombre": "Brindis",
+     "oculto": false,
+     "condicion": "beber_antes_de_ronda_final"
+    },
+    "aguanta_sargento": {
+     "nombre": "Aguanta, sargento",
+     "oculto": false,
+     "condicion": "ganar_con_sobriedad_1"
+    },
+    "vision_doble": {
+     "nombre": "Visión doble",
+     "oculto": false,
+     "condicion": "acusar_correctamente_sobriedad_minima"
+    },
+    "tolerancia": {
+     "nombre": "Tolerancia",
+     "oculto": false,
+     "condicion": "ganar_con_sobriedad_minima"
+    }
+   },
+   "dialogos": {
+    "estoico": {
+     "nombre": "Estoico",
+     "oculto": false,
+     "condicion": "siempre_estoico"
+    },
+    "lengua_suelta": {
+     "nombre": "Lengua suelta",
+     "oculto": false,
+     "condicion": "siempre_coquetear"
+    },
+    "soldado_de_hielo": {
+     "nombre": "Soldado de hielo",
+     "oculto": false,
+     "condicion": "siempre_provocar"
+    },
+    "versatil": {
+     "nombre": "Versátil",
+     "oculto": false,
+     "condicion": "usar_3_tonos_en_partida"
+    },
+    "de_pocas_palabras": {
+     "nombre": "De pocas palabras",
+     "oculto": false,
+     "condicion": "nunca_coquetear"
+    },
+    "tension_insostenible": {
+     "nombre": "Tensión insostenible",
+     "oculto": false,
+     "condicion": "coquetear_en_ropa_interior"
+    }
+   },
+   "meta": {
+    "otra_vez": {
+     "nombre": "¿Otra vez?",
+     "oculto": false,
+     "condicion": "jugar_5_partidas"
+    },
+    "habitual": {
+     "nombre": "Habitual",
+     "oculto": false,
+     "condicion": "jugar_10_partidas"
+    },
+    "vive_aqui": {
+     "nombre": "Vive aquí",
+     "oculto": true,
+     "condicion": "jugar_25_partidas"
+    },
+    "coleccionista": {
+     "nombre": "Coleccionista",
+     "oculto": true,
+     "condicion": "ver_ambos_endings_principales"
+    },
+    "completista": {
+     "nombre": "Completista",
+     "oculto": true,
+     "condicion": "activar_ambos_preludios"
+    },
+    "todas_las_noches": {
+     "nombre": "Todas las noches",
+     "oculto": true,
+     "condicion": "ver_ambos_endings_ambos_preludios_y_game_over"
+    },
+    "maestro_del_dado": {
+     "nombre": "Maestro del dado",
+     "oculto": true,
+     "condicion": "desbloquear_todos_los_logros"
+    }
+   },
+   "dificultad": {
+    "noche_tranquila": {
+     "nombre": "Noche tranquila",
+     "oculto": false,
+     "condicion": "ganar_en_facil"
+    },
+    "estrella_de_mar": {
+     "nombre": "Estrella de Mar",
+     "oculto": false,
+     "condicion": "ganar_en_normal"
+    },
+    "reglas_de_petri": {
+     "nombre": "Reglas de Petri",
+     "oculto": false,
+     "condicion": "ganar_en_dificil"
+    },
+    "ultimo_dado": {
+     "nombre": "Último dado",
+     "oculto": false,
+     "condicion": "ganar_en_pesadilla"
+    },
+    "masoquista": {
+     "nombre": "Masoquista",
+     "oculto": true,
+     "condicion": "perder_pesadilla_sin_ganar_ronda"
+    }
+   }
+  },
+  "dificultades": {
+   "facil": {
+    "nombre": "Noche tranquila",
+    "descripcion": "Para disfrutar la historia.",
+    "trampa_probabilidad_base": 0.15,
+    "trampa_bonus_perdiendo": 0.08,
+    "trampa_penalizacion_pillado": -0.05,
+    "brillo_trampa_sobrio_ms": 700,
+    "brillo_trampa_borracho_ms": 300,
+    "emp_inicial": 5,
+    "emp_maximo": 5,
+    "emp_por_trago": 1,
+    "sobriedad_inicial": 1.0,
+    "sobriedad_por_trago": -0.15,
+    "sobriedad_game_over": 0,
+    "ia_agresividad": 0.4,
+    "meta_ronda": 2000,
+    "doble_o_nada": {
+     "habilitado": false
+    }
+   },
+   "normal": {
+    "nombre": "La Estrella de Mar",
+    "descripcion": "La experiencia completa.",
+    "trampa_probabilidad_base": 0.25,
+    "trampa_bonus_perdiendo": 0.12,
+    "trampa_penalizacion_pillado": -0.07,
+    "brillo_trampa_sobrio_ms": 520,
+    "brillo_trampa_borracho_ms": 170,
+    "emp_inicial": 5,
+    "emp_maximo": 5,
+    "emp_por_trago": 1,
+    "sobriedad_inicial": 1.0,
+    "sobriedad_por_trago": -0.2,
+    "sobriedad_game_over": 0,
+    "ia_agresividad": 0.6,
+    "meta_ronda": 2000,
+    "doble_o_nada": {
+     "habilitado": true,
+     "tipo": "puntos",
+     "multiplicador": 2,
+     "rein_requiere_sobriedad_menor_a": 1.0,
+     "daku_propone_cuando_pierde": true,
+     "daku_propone_probabilidad": 0.3
+    }
+   },
+   "dificil": {
+    "nombre": "Reglas de Petri",
+    "descripcion": "La casa siempre gana.",
+    "trampa_probabilidad_base": 0.4,
+    "trampa_bonus_perdiendo": 0.15,
+    "trampa_penalizacion_pillado": -0.05,
+    "brillo_trampa_sobrio_ms": 300,
+    "brillo_trampa_borracho_ms": 80,
+    "emp_inicial": 3,
+    "emp_maximo": 5,
+    "emp_por_trago": 1,
+    "sobriedad_inicial": 1.0,
+    "sobriedad_por_trago": -0.25,
+    "sobriedad_game_over": 0,
+    "ia_agresividad": 0.75,
+    "meta_ronda": 2000,
+    "doble_o_nada": {
+     "habilitado": true,
+     "tipo": "prendas",
+     "prendas_perdidas": 2,
+     "rein_requiere_sobriedad_menor_a": 0.6,
+     "daku_propone_cuando_pierde": true,
+     "daku_propone_probabilidad": 0.5
+    }
+   },
+   "pesadilla": {
+    "nombre": "Último dado",
+    "descripcion": "No digas que no te lo advertí.",
+    "trampa_probabilidad_base": 0.5,
+    "trampa_bonus_perdiendo": 0.15,
+    "trampa_penalizacion_pillado": -0.03,
+    "trampa_dados_dobles": true,
+    "brillo_trampa_sobrio_ms": 150,
+    "brillo_trampa_borracho_ms": 40,
+    "emp_inicial": 2,
+    "emp_maximo": 4,
+    "emp_por_trago": 1,
+    "sobriedad_inicial": 1.0,
+    "sobriedad_por_trago": -0.35,
+    "sobriedad_game_over": 0,
+    "ia_agresividad": 0.9,
+    "meta_ronda": 2000,
+    "doble_o_nada": {
+     "habilitado": true,
+     "tipo": "prendas",
+     "prendas_perdidas": 2,
+     "rein_requiere_sobriedad_menor_a": 0.8,
+     "daku_propone_cuando_pierde": true,
+     "daku_propone_siempre": true,
+     "daku_propone_probabilidad": 0.7
+    }
+   }
+  },
+  "doble_o_nada_dialogos": {
+   "rein_propone": {
+    "provocar": [
+     {
+      "speaker": "rein",
+      "expression": "neutral",
+      "text": "Doble o nada."
+     },
+     {
+      "speaker": "daku",
+      "expression": "flirty",
+      "text": "Mira quién se pone atrevido. El alcohol te sienta bien, sargento."
+     }
+    ],
+    "coquetear": [
+     {
+      "speaker": "rein",
+      "expression": "neutral",
+      "text": "Doble o nada. ¿Te atreves?"
+     },
+     {
+      "speaker": "daku",
+      "expression": "flirty",
+      "text": "¿Si me atrevo? ¿Tú me estás preguntando a mí si me atrevo? Hecho. Mil veces hecho."
+     }
+    ],
+    "estoico": [
+     {
+      "speaker": "rein",
+      "expression": "neutral",
+      "text": "Doble o nada."
+     },
+     {
+      "speaker": "daku",
+      "expression": "surprised",
+      "text": "Sin dudarlo. Sin pensarlo. Eso me dice todo, Diermissen."
+     }
+    ]
+   },
+   "daku_propone": {
+    "propuesta": [
+     {
+      "speaker": "daku",
+      "expression": "flirty",
+      "text": "Propuesta, sargento. Esta ronda, doble o nada. ¿O te da miedo quedarte en nada delante de mí?"
+     }
+    ],
+    "rein_acepta": [
+     {
+      "speaker": "rein",
+      "expression": "neutral",
+      "text": "Acepto."
+     },
+     {
+      "speaker": "daku",
+      "expression": "smile",
+      "text": "Me encanta cuando dices eso."
+     }
+    ],
+    "rein_rechaza": [
+     {
+      "speaker": "rein",
+      "expression": "neutral",
+      "text": "No."
+     },
+     {
+      "speaker": "daku",
+      "expression": "smile",
+      "text": "Prudente. Aburrido, pero prudente."
+     }
+    ]
+   }
+  },
+  "preludios_secretos": {
+   "all_caught_prelude": [
+    {
+     "speaker": "stage",
+     "text": "Antes de que ninguno se mueva, Daku se detiene."
+    },
+    {
+     "speaker": "daku",
+     "expression": "neutral",
+     "text": "Las viste todas."
+    },
+    {
+     "speaker": "rein",
+     "expression": "neutral",
+     "text": "Todas."
+    },
+    {
+     "speaker": "daku",
+     "expression": "surprised",
+     "text": "¿Cómo? Nadie— nunca nadie—"
+    },
+    {
+     "speaker": "rein",
+     "expression": "neutral",
+     "text": "Te estaba mirando."
+    },
+    {
+     "speaker": "daku",
+     "expression": "neutral",
+     "text": "No. Todos me miran. Tú me estabas viendo. De verdad."
+    },
+    {
+     "speaker": "stage",
+     "text": "Silencio. Cuando Daku habla, no sonríe."
+    },
+    {
+     "speaker": "daku",
+     "expression": "neutral",
+     "text": "No me mires así, Diermissen."
+    },
+    {
+     "speaker": "rein",
+     "expression": "neutral",
+     "text": "¿Así cómo?"
+    },
+    {
+     "speaker": "daku",
+     "expression": "neutral",
+     "text": "Como si me conocieras."
+    }
+   ],
+   "none_caught_prelude": [
+    {
+     "speaker": "daku",
+     "expression": "smile",
+     "text": "Buena partida, soldadito."
+    },
+    {
+     "speaker": "stage",
+     "text": "Pausa. Rein no dice nada."
+    },
+    {
+     "speaker": "daku",
+     "expression": "neutral",
+     "text": "¿No me vas a decir que hice trampa?"
+    },
+    {
+     "speaker": "rein",
+     "expression": "neutral",
+     "text": "No."
+    },
+    {
+     "speaker": "daku",
+     "expression": "neutral",
+     "text": "¿Por qué no?"
+    },
+    {
+     "speaker": "rein",
+     "expression": "neutral",
+     "text": "Porque ya lo sé."
+    },
+    {
+     "speaker": "stage",
+     "text": "La sonrisa de Daku se congela."
+    },
+    {
+     "speaker": "daku",
+     "expression": "surprised",
+     "text": "...¿Qué?"
+    },
+    {
+     "speaker": "rein",
+     "expression": "neutral",
+     "text": "El tercer tiro. El quinto. El octavo."
+    },
+    {
+     "speaker": "daku",
+     "expression": "surprised",
+     "text": "Los viste."
+    },
+    {
+     "speaker": "rein",
+     "expression": "neutral",
+     "text": "Los vi todos."
+    },
+    {
+     "speaker": "daku",
+     "expression": "neutral",
+     "text": "¿Y no dijiste nada?"
+    },
+    {
+     "speaker": "stage",
+     "text": "Rein no responde. No necesita hacerlo."
+    }
+   ]
+  }
  }
 };

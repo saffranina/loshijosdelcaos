@@ -19,6 +19,7 @@ import { DakuAI } from '../systems/DakuAI.js';
 import { GameState } from '../systems/GameState.js';
 import { playMusic } from '../systems/Music.js';
 import { dadoElegido, dadosLanzados } from '../systems/Sfx.js';
+import { Achievements } from '../systems/Achievements.js';
 import {
   rollDice, hasScoring, scoreSelection, describeSelection,
 } from '../systems/FarkleLogic.js';
@@ -242,15 +243,21 @@ export class FarkleScene extends Phaser.Scene {
     this.dakuRound = 0;
     this.lastChance = null;
     this.turnsThisRound = 0;
+    this.reinTurnsThisRound = 0;
+    this.reinRollsThisRound = 0;
     this.don = false;
+    this.donRules = null;
+    this.dakuProposedDon = false;
+    this.target = this.cfg.round_target;
     this.reinSkipsTurn = this.reinSkipsTurn || false;
     this.refreshHud();
     this.clearDice();
 
     // Cada ronda disputa una sola prenda; se juegan las que hagan falta hasta
     // que alguien se quede sin las tres (ver checkGameOver).
-    if (GameState.round === 1) this.beginTurn('rein');
-    else this.tauntPhase(() => this.beginTurn('rein'));
+    const empezar = () => this.prepareDoubleOrNothing(() => this.beginTurn('rein'));
+    if (GameState.round === 1) empezar();
+    else this.tauntPhase(empezar);
   }
 
   /** El jugador elige el tono; Daku responde. Es también un momento de distracción. */
@@ -261,6 +268,7 @@ export class FarkleScene extends Phaser.Scene {
       (idx) => {
         const tone = TONES[idx];
         GameState.lastTone = tone.key;
+        Achievements.event('tone', { tone: tone.key, nearlyNaked: level === 'nearly_naked' });
         const reinEntry = pick(this.d.act3.rein_taunts[tone.key][level]);
 
         // Intercambio ya escrito de principio a fin: se juega tal cual y no se
@@ -285,22 +293,46 @@ export class FarkleScene extends Phaser.Scene {
   }
 
   /** Daku propone doble o nada cuando va perdiendo. */
-  offerDoubleOrNothing(next) {
-    const th = this.cfg.double_or_nothing_threshold ?? 3;
-    const losing = GameState.dakuLost >= th && GameState.dakuLost > GameState.reinLost;
-    if (GameState.donOffered || !losing) { next(); return; }
-    GameState.donOffered = true;
+  prepareDoubleOrNothing(next) {
+    const rules = this.cfg.double_or_nothing || { habilitado:false };
+    const limit = rules.rein_requiere_sobriedad_menor_a;
+    if (!rules.habilitado || limit == null || GameState.sobriety >= limit) {
+      this.offerDoubleOrNothing(next); return;
+    }
+    this.dialogue.choices([
+      { label:'Proponer doble o nada' }, { label:'Jugar normal' },
+    ], (idx) => {
+      if (idx !== 0) { this.offerDoubleOrNothing(next); return; }
+      this.don = true;
+      this.donRules = rules;
+      Achievements.event('rein_don_propose');
+      if (rules.tipo === 'puntos') this.target = this.cfg.round_target * (rules.multiplicador ?? 2);
+      const tone = { provoke:'provocar', flirt:'coquetear', stoic:'estoico' }[GameState.lastTone] || 'estoico';
+      const lines = GameState.mechanics?.doble_o_nada_dialogos?.rein_propone?.[tone] || [];
+      this.refreshHud();
+      if (lines.length) this.dialogue.play(lines, next); else next();
+    }, { prompt:'La apuesta puede subir.' });
+  }
 
-    const don = this.d.act3.double_or_nothing;
-    this.dialogue.say(don.propose, () => {
-      this.dialogue.choices(don.options.map((o) => ({ label: o.label })), (idx) => {
-        const opt = don.options[idx];
-        this.don = !!opt.accept;
+  offerDoubleOrNothing(next) {
+    const rules = this.cfg.double_or_nothing || { habilitado:false };
+    const losing = GameState.dakuLost > GameState.reinLost;
+    const chance = rules.daku_propone_siempre ? 1 : (rules.daku_propone_probabilidad ?? 0);
+    if (!rules.habilitado || !rules.daku_propone_cuando_pierde || !losing || Math.random() >= chance) {
+      next(); return;
+    }
+
+    const dialog = GameState.mechanics?.doble_o_nada_dialogos?.daku_propone;
+    const proposal = dialog?.propuesta || [this.d.act3.double_or_nothing.propose];
+    this.dakuProposedDon = true;
+    this.dialogue.play(proposal, () => {
+      this.dialogue.choices([{ label:'Aceptar' }, { label:'Rechazar' }], (idx) => {
+        this.don = idx === 0;
+        this.donRules = rules;
+        if (this.don && rules.tipo === 'puntos') this.target = this.cfg.round_target * (rules.multiplicador ?? 2);
         this.refreshHud();
-        this.dialogue.say(
-          { speaker: 'daku', expression: opt.expression, text: opt.reply },
-          next
-        );
+        const reply = idx === 0 ? dialog?.rein_acepta : dialog?.rein_rechaza;
+        if (reply?.length) this.dialogue.play(reply, next); else next();
       });
     });
   }
@@ -332,6 +364,7 @@ export class FarkleScene extends Phaser.Scene {
     this.turnPoints = 0;
     this.clearDice();
     this.turnsThisRound++;
+    if (who === 'rein') this.reinTurnsThisRound++;
 
     if (this.turnsThisRound > MAX_TURNS_PER_ROUND) { this.endRound(); return; }
 
@@ -469,6 +502,7 @@ export class FarkleScene extends Phaser.Scene {
   // ==================================================================
 
   playerRoll() {
+    this.reinRollsThisRound++;
     this.busy = true;
     this.selectable = false;
     this.hideButtons();
@@ -496,6 +530,10 @@ export class FarkleScene extends Phaser.Scene {
     this.busy = true;
 
     this.turnPoints += r.score;
+    const allSix = this.kept.length + this.selected.size >= this.cfg.dice_count;
+    Achievements.event('selection', {
+      values: vals, rollAgain, allSix, turnPoints: this.turnPoints,
+    });
     this.selected.forEach((i) => { this.kept.push(i); this.dice[i].setKept(true); });
     this.active = this.active.filter((i) => !this.selected.has(i));
     this.selected.clear();
@@ -544,6 +582,7 @@ export class FarkleScene extends Phaser.Scene {
   }
 
   playerBank() {
+    Achievements.event('bank', { points: this.turnPoints });
     this.reinRound += this.turnPoints;
     this.turnPointsText.setText('');
     this.refreshHud();
@@ -552,6 +591,7 @@ export class FarkleScene extends Phaser.Scene {
   }
 
   playerFarkle() {
+    Achievements.event('farkle', { turnPoints: this.turnPoints });
     this.turnPoints = 0;
     this.turnPointsText.setText('');
     this.tableText.setText('');
@@ -565,6 +605,10 @@ export class FarkleScene extends Phaser.Scene {
     this.hideButtons();
     this.selectable = false;
     GameState.drink();
+    Achievements.event('drink', {
+      round: GameState.round, total: GameState.drinks,
+      beforeFinal: GameState.reinLost >= 2 || GameState.dakuLost >= 2,
+    });
     this.refreshHud();
     this.emp.pulse();
     this.drinks.applyCameraWobble();
@@ -670,6 +714,21 @@ export class FarkleScene extends Phaser.Scene {
     GameState.cheatsTotal++;
     this.pendingCheat = { dieIndex, ...plan };
     this.dice[dieIndex].cheatTo(plan.to, this.ai.cheatFlashMs(GameState.drunkenness));
+
+    // En Pesadilla Daku puede alterar dos dados durante la misma distracción.
+    // Sigue siendo una sola oportunidad de acusación: acertar revierte su turno entero.
+    if (this.cfg.cheat_double_dice && this.active.length > 1) {
+      const changed = values.slice();
+      changed[plan.index] = plan.to;
+      const remainingPositions = changed.map((_, i) => i).filter((i) => i !== plan.index);
+      const second = this.ai.planCheat(remainingPositions.map((i) => changed[i]), GameState.round);
+      if (second) {
+        const originalPosition = remainingPositions[second.index];
+        const secondDieIndex = this.active[originalPosition];
+        this.pendingCheat.extra = { dieIndex: secondDieIndex, ...second, index: originalPosition };
+        this.dice[secondDieIndex].cheatTo(second.to, this.ai.cheatFlashMs(GameState.drunkenness));
+      }
+    }
   }
 
   showAccuseWindow() {
@@ -691,6 +750,7 @@ export class FarkleScene extends Phaser.Scene {
 
   accuse() {
     this.hideButtons();
+    const empBefore = GameState.emp;
     if (!GameState.spendEmp()) return;
     GameState.accusationsMade++;
     this.emp.pulse();
@@ -699,6 +759,10 @@ export class FarkleScene extends Phaser.Scene {
     if (this.pendingCheat) {
       // Acierto: Daku pierde el turno.
       GameState.cheatsCaught++;
+      Achievements.event('accuse_correct', {
+        total: GameState.cheatsCaught, empBefore, sobriety: GameState.sobriety,
+        minimumSobriety: this.cfg.sobriety_loss_per_drink ?? .2,
+      });
       GameState.restoreResources(1, 2);
       this.ai.notifyCaught();
       this.pendingCheat = null;
@@ -712,10 +776,15 @@ export class FarkleScene extends Phaser.Scene {
     } else {
       // Fallo: Rein pierde el turno siguiente.
       GameState.falseAccusations++;
+      Achievements.event('accuse_false', {
+        total: GameState.falseAccusations, round: GameState.round, empAfter: GameState.emp,
+        correctTotal: GameState.cheatsCaught,
+      });
       this.ai.notifyMissed();
       this.reinSkipsTurn = true;
       this.dialogue.play(pick(this.d.act3.cheat_false), () => this.dakuDecide());
     }
+    if (GameState.emp === 0) Achievements.event('emp_zero');
   }
 
   dakuDecide() {
@@ -786,7 +855,18 @@ export class FarkleScene extends Phaser.Scene {
     const loser = this.reinRound < this.dakuRound ? 'rein' : 'daku';
     if (loser === 'rein') GameState.dakuRoundsWon++;
     else GameState.reinRoundsWon++;
-    const lost = GameState.loseGarments(loser, 1);
+    const garmentCount = this.don && this.donRules?.tipo === 'prendas'
+      ? (this.donRules.prendas_perdidas ?? 2) : 1;
+    const lost = GameState.loseGarments(loser, garmentCount);
+    Achievements.event('garment_lost', { who: loser, round: GameState.round });
+    if (loser === 'daku') {
+      Achievements.event('round_won', { oneTurn: this.reinRollsThisRound === 1 });
+      if (this.don) Achievements.event('don_win');
+    } else {
+      Achievements.event('round_lost');
+      if (this.don) Achievements.event('don_lose');
+      if (this.don && this.dakuProposedDon) Achievements.event('daku_don_win');
+    }
     const pool = loser === 'rein' ? this.d.act3.rein_loses_garment : this.d.act3.daku_loses_garment;
 
     this.dialogue.note('stage',
@@ -825,6 +905,9 @@ export class FarkleScene extends Phaser.Scene {
     }
 
     GameState.round++;
+    this.target = this.cfg.round_target;
+    this.donRules = null;
+    this.dakuProposedDon = false;
     this.refreshHud();
     this.startRound();
   }

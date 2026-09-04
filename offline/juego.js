@@ -90,9 +90,221 @@ return { "C": C, "F": F, "SPEAKERS": SPEAKERS };
 })();
 
 // --------------------------------------------------------------------
+// src/systems/Mechanics.js
+__M["src/systems/Mechanics.js"] = (function () {
+const DIFFICULTY_ORDER = ['facil', 'normal', 'dificil', 'pesadilla'];
+
+function difficultyConfig(base, mechanics, key = 'normal') {
+  const d = mechanics?.dificultades?.[key] || mechanics?.dificultades?.normal;
+  if (!d) return { ...base };
+  return {
+    ...base,
+    round_target: d.meta_ronda,
+    cheat_probability: d.trampa_probabilidad_base,
+    cheat_losing_bonus: d.trampa_bonus_perdiendo,
+    cheat_caught_penalty: d.trampa_penalizacion_pillado,
+    cheat_flash_ms_sober: d.brillo_trampa_sobrio_ms,
+    cheat_flash_ms_drunk: d.brillo_trampa_borracho_ms,
+    starting_emp: d.emp_inicial,
+    max_emp: d.emp_maximo,
+    emp_per_drink: d.emp_por_trago,
+    starting_sobriety: d.sobriedad_inicial,
+    sobriety_loss_per_drink: Math.abs(d.sobriedad_por_trago),
+    ai_aggression: d.ia_agresividad,
+    double_or_nothing: d.doble_o_nada || { habilitado: false },
+    cheat_double_dice: !!d.trampa_dados_dobles,
+  };
+}
+
+function difficultyLabel(mechanics, key) {
+  const d = mechanics?.dificultades?.[key];
+  return d ? `${d.nombre} — ${d.descripcion}` : key;
+}
+return { "DIFFICULTY_ORDER": DIFFICULTY_ORDER, "difficultyConfig": difficultyConfig, "difficultyLabel": difficultyLabel };
+})();
+
+// --------------------------------------------------------------------
+// src/systems/Achievements.js
+__M["src/systems/Achievements.js"] = (function () {
+// Logros persistentes. El progreso se guarda en localStorage por navegador.
+
+const STORAGE_KEY = 'ldc_logros_v1';
+
+const emptySave = () => ({ unlocked: {}, games: 0, endings: {}, preludes: {} });
+
+function readSave() {
+  try { return { ...emptySave(), ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') }; }
+  catch (_) { return emptySave(); }
+}
+
+function writeSave(save) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(save)); } catch (_) {}
+}
+
+class AchievementTracker {
+  configure(config) {
+    this.config = config || { achievements: {} };
+    this.definitions = {};
+    for (const [category, entries] of Object.entries(this.config.achievements || {})) {
+      for (const [id, def] of Object.entries(entries)) this.definitions[id] = { ...def, id, category };
+    }
+    this.save = readSave();
+    this.beginRun('normal');
+  }
+
+  beginRun(difficulty = 'normal') {
+    this.run = {
+      difficulty, tones: [], drinkRounds: [], falseStreak: 0, maxFalseStreak: 0,
+      tripleSelections: 0, onlyOnesFives: true, consecutiveRoundWins: 0,
+      maxConsecutiveRoundWins: 0, wonRoundOneRoll: false, reinDonProposals: 0,
+    };
+  }
+
+  unlock(id) {
+    if (!this.definitions?.[id] || this.save.unlocked[id]) return false;
+    this.save.unlocked[id] = Date.now();
+    writeSave(this.save);
+    this.toast(this.definitions[id].nombre);
+    window.dispatchEvent(new CustomEvent('ldc-achievement', { detail: { id } }));
+    return true;
+  }
+
+  toast(name) {
+    const host = document.getElementById('game') || document.body;
+    const el = document.createElement('div');
+    el.textContent = `🏆 Logro desbloqueado: ${name}`;
+    el.style.cssText = 'position:absolute;right:14px;top:76px;z-index:1000;padding:10px 14px;' +
+      'max-width:330px;background:#172534f2;border:1px solid #ffd24a;color:#fff;' +
+      'font:14px Georgia,serif;border-radius:5px;box-shadow:0 8px 24px #0009;' +
+      'transition:opacity .35s,transform .35s;';
+    host.appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(-8px)'; }, 2600);
+    setTimeout(() => el.remove(), 3100);
+  }
+
+  event(type, data = {}) {
+    const r = this.run;
+    if (!r) return;
+    if (type === 'tone') {
+      r.tones.push(data.tone);
+      if (new Set(r.tones).size >= 3) this.unlock('versatil');
+      if (data.tone === 'flirt' && data.nearlyNaked) this.unlock('tension_insostenible');
+    }
+    if (type === 'selection') {
+      const values = data.values || [];
+      if (values.length === 6) this.unlock('seis_de_seis');
+      if (values.length === 6 && [1,2,3,4,5,6].every((v) => values.includes(v))) this.unlock('escalera_de_marfil');
+      const counts = values.reduce((m, v) => (m[v] = (m[v] || 0) + 1, m), {});
+      r.tripleSelections += Object.values(counts).filter((n) => n === 3).length;
+      if (r.tripleSelections >= 3) this.unlock('amenaza_triple');
+      if (values.some((v) => v !== 1 && v !== 5)) r.onlyOnesFives = false;
+      if (data.rollAgain && data.allSix) this.unlock('dados_calientes');
+      if (data.rollAgain && data.turnPoints > 1500) this.unlock('adicto_al_riesgo');
+    }
+    if (type === 'bank') {
+      if (data.points < 200) this.unlock('gallina');
+    }
+    if (type === 'farkle' && data.turnPoints > 1000) this.unlock('codicia');
+    if (type === 'drink') {
+      if (!r.drinkRounds.includes(data.round)) r.drinkRounds.push(data.round);
+      if (data.total >= 3) this.unlock('una_mas');
+      if (data.beforeFinal) this.unlock('brindis');
+    }
+    if (type === 'accuse_correct') {
+      this.unlock('descarga');
+      if (data.total >= 3) this.unlock('tercer_ojo');
+      if (data.empBefore === 1) this.unlock('francotirador');
+      if (data.sobriety <= data.minimumSobriety + 0.001) this.unlock('vision_doble');
+      r.falseStreak = 0;
+    }
+    if (type === 'accuse_false') {
+      r.falseStreak++;
+      r.maxFalseStreak = Math.max(r.maxFalseStreak, r.falseStreak);
+      if (data.total >= 3) this.unlock('paranoico');
+      if (r.falseStreak >= 2) this.unlock('nunca_aprendes');
+      if (data.round === 1) this.unlock('gatillo_facil');
+      if (data.empAfter === 0 && data.correctTotal === 0) this.unlock('desarmado');
+    }
+    if (type === 'emp_zero') this.unlock('sin_bateria');
+    if (type === 'garment_lost' && data.who === 'rein' && data.round === 1) this.unlock('exhibicionista');
+    if (type === 'round_won') {
+      r.consecutiveRoundWins++;
+      r.maxConsecutiveRoundWins = Math.max(r.maxConsecutiveRoundWins, r.consecutiveRoundWins);
+      if (data.oneTurn) this.unlock('conservador');
+      if (r.onlyOnesFives) this.unlock('de_uno_en_uno');
+      if (r.consecutiveRoundWins >= 3) this.unlock('racha_perfecta');
+      r.onlyOnesFives = true;
+    }
+    if (type === 'round_lost') { r.consecutiveRoundWins = 0; r.onlyOnesFives = true; }
+    if (type === 'don_win') this.unlock('todo_o_nada');
+    if (type === 'don_lose') this.unlock('mal_calculo');
+    if (type === 'rein_don_propose') {
+      r.reinDonProposals = (r.reinDonProposals || 0) + 1;
+      if (r.reinDonProposals >= 3) this.unlock('jugador_compulsivo');
+    }
+    if (type === 'daku_don_win') this.unlock('la_casa_siempre_gana');
+  }
+
+  finish(ending, state) {
+    const r = this.run;
+    const won = ending === 'rein_wins';
+    this.save.games++;
+    this.save.endings[ending] = true;
+    if (state.prelude) this.save.preludes[state.prelude] = true;
+    if (ending === 'rein_wins') this.unlock('buen_soldado');
+    if (ending === 'daku_wins') this.unlock('mala_apuesta');
+    if (ending === 'drunk_game_over') this.unlock('fondo_de_botella');
+    if (state.prelude === 'all_caught') this.unlock('ojo_de_halcon');
+    if (state.prelude === 'none_caught') this.unlock('sabias');
+    if (won && state.drinks === 0) this.unlock('sobrio');
+    if (won && state.reinLost === 0) this.unlock('impecable');
+    if (won && state.reinLost === 2) this.unlock('remontada');
+    if (state.round === 3) this.unlock('partida_relampago');
+    if (r.drinkRounds.length >= state.round) this.unlock('catador');
+    if (!r.tones.includes('flirt')) this.unlock('de_pocas_palabras');
+    if (r.tones.length && r.tones.every((tone) => tone === 'stoic')) this.unlock('estoico');
+    if (r.tones.length && r.tones.every((tone) => tone === 'flirt')) this.unlock('lengua_suelta');
+    if (r.tones.length && r.tones.every((tone) => tone === 'provoke')) this.unlock('soldado_de_hielo');
+    if (won && state.sobriety <= 0.2 + 0.001) {
+      this.unlock('aguanta_sargento'); this.unlock('tolerancia');
+    }
+    if (state.accusationsMade === 0) this.unlock('ciego_voluntario');
+    const difficultyAchievement = {
+      facil:'noche_tranquila', normal:'estrella_de_mar',
+      dificil:'reglas_de_petri', pesadilla:'ultimo_dado',
+    }[r.difficulty];
+    if (won && difficultyAchievement) this.unlock(difficultyAchievement);
+    if (!won && r.difficulty === 'pesadilla' && state.reinRoundsWon === 0) this.unlock('masoquista');
+    if (this.save.games >= 5) this.unlock('otra_vez');
+    if (this.save.games >= 10) this.unlock('habitual');
+    if (this.save.games >= 25) this.unlock('vive_aqui');
+    if (this.save.endings.rein_wins && this.save.endings.daku_wins) this.unlock('coleccionista');
+    if (this.save.preludes.all_caught && this.save.preludes.none_caught) this.unlock('completista');
+    if (this.save.endings.rein_wins && this.save.endings.daku_wins &&
+        this.save.endings.drunk_game_over && this.save.preludes.all_caught && this.save.preludes.none_caught) {
+      this.unlock('todas_las_noches');
+    }
+    const ids = Object.keys(this.definitions).filter((id) => id !== 'maestro_del_dado');
+    if (ids.every((id) => this.save.unlocked[id])) this.unlock('maestro_del_dado');
+    writeSave(this.save);
+  }
+
+  entries() {
+    return Object.values(this.definitions || {}).map((d) => ({ ...d, unlocked: !!this.save.unlocked[d.id] }));
+  }
+}
+
+const Achievements = new AchievementTracker();
+return { "Achievements": Achievements };
+})();
+
+// --------------------------------------------------------------------
 // src/systems/GameState.js
 __M["src/systems/GameState.js"] = (function () {
+var difficultyConfig = __M["src/systems/Mechanics.js"].difficultyConfig;
+var Achievements = __M["src/systems/Achievements.js"].Achievements;
 // GameState.js — estado global de la partida. Un solo objeto compartido entre escenas.
+
 
 const GARMENTS = ['shirt', 'pants', 'underwear'];
 
@@ -108,6 +320,9 @@ const GARMENT_ES = {
 class State {
   constructor() {
     this.config = null;
+    this.baseConfig = null;
+    this.mechanics = null;
+    this.selectedDifficulty = 'normal';
     this.dialogues = null;
     this.reset();
   }
@@ -127,7 +342,7 @@ class State {
     // Recursos
     this.emp = c.starting_emp ?? 3;
     this.maxEmp = c.max_emp ?? 5;
-    this.sobriety = 1.0;          // 1 = lúcido, 0 = destruido
+    this.sobriety = c.starting_sobriety ?? 1.0;
     this.drinks = 0;
 
     // Partida
@@ -144,6 +359,20 @@ class State {
     this.falseAccusations = 0;
 
     this.ending = null;
+    this.prelude = null;
+    this.achievementsFinalized = false;
+  }
+
+  setDifficulty(key) {
+    this.selectedDifficulty = key;
+    this.config = difficultyConfig(this.baseConfig || this.config || {}, this.mechanics, key);
+    return this.config;
+  }
+
+  startNewGame() {
+    this.setDifficulty(this.selectedDifficulty);
+    this.reset(this.config);
+    Achievements.beginRun(this.selectedDifficulty);
   }
 
   // ---- ropa ----
@@ -226,16 +455,48 @@ class State {
 
   // ---- endings ----
   /**
-   * Los endings secretos tienen prioridad sobre los principales (ver GDD §8).
-   * @param {'rein'|'daku'|'tie'} loser quién se quedó sin ropa
+   * Quién se quedó sin las tres prendas.
+   *
+   * No hay empate: cada ronda la pierde uno solo, así que los dos no pueden
+   * quedarse sin ropa a la vez. El ending de empate se quitó por eso.
+   *
+   * @param {'rein'|'daku'} loser
    */
   resolveEnding(loser) {
-    if (loser === 'daku') {
-      this.ending = 'rein_wins';
-    } else {
-      this.ending = 'daku_wins';
-    }
+    this.ending = loser === 'daku' ? 'rein_wins' : 'daku_wins';
+    this.prelude = this.resolvePrelude();
     return this.ending;
+  }
+
+  /**
+   * Escena que se juega ANTES del final, según cómo se leyó a Daku.
+   *
+   * No sustituye al final: quien gana sigue ganando y se ve su splash. Esto
+   * es un momento extra que se gana jugando de una forma concreta.
+   *
+   * Las dos condiciones no pueden darse a la vez: cazarlas todas exige haber
+   * acusado, y la otra exige no haber acusado nunca.
+   *
+   * @returns {'all_caught'|'none_caught'|null}
+   */
+  resolvePrelude() {
+    const c = this.config || {};
+
+    // Las vio todas y no acusó ni una vez de más.
+    const minCazadas = c.all_caught_min_cheats ?? 1;
+    if (this.cheatsTotal >= minCazadas &&
+        this.cheatsCaught === this.cheatsTotal &&
+        this.falseAccusations === 0) {
+      return 'all_caught';
+    }
+
+    // Daku hizo trampa varias veces y el jugador no dijo nada en toda la noche.
+    const minCallado = c.none_caught_min_cheats ?? 3;
+    if (this.cheatsTotal >= minCallado && this.accusationsMade === 0) {
+      return 'none_caught';
+    }
+
+    return null;
   }
 }
 
@@ -249,6 +510,7 @@ __M["src/scenes/BootScene.js"] = (function () {
 var C = __M["src/theme.js"].C;
 var F = __M["src/theme.js"].F;
 var GameState = __M["src/systems/GameState.js"].GameState;
+var Achievements = __M["src/systems/Achievements.js"].Achievements;
 // BootScene.js — carga datos y arte. Todo el arte es OPCIONAL: si un PNG
 // todavía no existe, el juego sigue con placeholders y no rompe.
 
@@ -295,9 +557,11 @@ class BootScene extends Phaser.Scene {
     if (window.LDC_DATOS) {
       this.cache.json.add('dialogues', window.LDC_DATOS.dialogues);
       this.cache.json.add('farkleConfig', window.LDC_DATOS.farkleConfig);
+      this.cache.json.add('mechanicsConfig', window.LDC_DATOS.mechanicsConfig || { achievements:{}, dificultades:{} });
     } else {
       this.load.json('dialogues', 'src/data/dialogues.json');
       this.load.json('farkleConfig', 'src/data/farkle-config.json');
+      this.load.json('mechanicsConfig', 'src/data/mechanics-achievements.json');
     }
 
     // Portraits (opcionales)
@@ -333,6 +597,7 @@ class BootScene extends Phaser.Scene {
   create() {
     const dialogues = this.cache.json.get('dialogues');
     const config = this.cache.json.get('farkleConfig');
+    const mechanics = this.cache.json.get('mechanicsConfig');
 
     if (!dialogues || !config) {
       this.add.text(40, 40,
@@ -345,7 +610,11 @@ class BootScene extends Phaser.Scene {
     }
 
     GameState.dialogues = dialogues;
-    GameState.reset(config);
+    GameState.baseConfig = config;
+    GameState.mechanics = mechanics;
+    Achievements.configure(mechanics);
+    GameState.setDifficulty(GameState.selectedDifficulty);
+    GameState.reset(GameState.config);
 
     if (this.missing.length) {
       console.info(
@@ -577,6 +846,8 @@ var makeButton = __M["src/systems/Ui.js"].makeButton;
 var paintBackdrop = __M["src/systems/Ui.js"].paintBackdrop;
 var GameState = __M["src/systems/GameState.js"].GameState;
 var playMusic = __M["src/systems/Music.js"].playMusic;
+var DIFFICULTY_ORDER = __M["src/systems/Mechanics.js"].DIFFICULTY_ORDER;
+var difficultyLabel = __M["src/systems/Mechanics.js"].difficultyLabel;
 // TitleScene.js — pantalla de título.
 
 
@@ -608,19 +879,35 @@ class TitleScene extends Phaser.Scene {
       }).setOrigin(0.5);
     }
 
-    makeButton(this, width / 2, height * 0.60, 230, 44, 'Entrar al bar', () => {
-      GameState.reset(GameState.config);
+    makeButton(this, width / 2, height * 0.57, 230, 44, 'Entrar al bar', () => {
+      GameState.startNewGame();
       playMusic(this, 'music_bar');
       this.scene.start('Act1');
     }, { fontSize: 17 });
 
-    makeButton(this, width / 2, height * 0.70, 230, 36, 'Ir directo al Farkle', () => {
-      GameState.reset(GameState.config);
+    makeButton(this, width / 2, height * 0.66, 230, 36, 'Ir directo al Farkle', () => {
+      GameState.startNewGame();
       playMusic(this, 'music_farkle');
       this.scene.start('Tutorial', { next: 'Farkle' });
     }, { fontSize: 14 });
 
-    makeButton(this, width / 2, height * 0.78, 230, 34, 'Cómo jugar', () => {
+    let description;
+    const difficultyButton = makeButton(this, 310, height * 0.75, 210, 34, '', () => {
+      const i = DIFFICULTY_ORDER.indexOf(GameState.selectedDifficulty);
+      GameState.setDifficulty(DIFFICULTY_ORDER[(i + 1) % DIFFICULTY_ORDER.length]);
+      difficultyButton.setLabel(`Dificultad: ${GameState.mechanics.dificultades[GameState.selectedDifficulty].nombre}`);
+      description.setText(difficultyLabel(GameState.mechanics, GameState.selectedDifficulty));
+    }, { fontSize: 13 });
+    difficultyButton.setLabel(`Dificultad: ${GameState.mechanics.dificultades[GameState.selectedDifficulty].nombre}`);
+    makeButton(this, 490, height * 0.75, 130, 34, 'Logros', () => {
+      this.scene.start('Achievements');
+    }, { fontSize: 13 });
+    description = this.add.text(width / 2, height * 0.79,
+      difficultyLabel(GameState.mechanics, GameState.selectedDifficulty), {
+        fontFamily: F.body, fontSize: '12px', color: C.textDim,
+      }).setOrigin(0.5);
+
+    makeButton(this, width / 2, height * 0.86, 230, 34, 'Cómo jugar', () => {
       this.scene.start('Tutorial', { next: 'Title' });
     }, { fontSize: 13 });
   }
@@ -2260,10 +2547,10 @@ class DakuAI {
     let p = this.cheatProbability;
 
     // Más tentado cuando va perdiendo.
-    if (state.dakuLost > state.reinLost) p += 0.12;
+    if (state.dakuLost > state.reinLost) p += this.config.cheat_losing_bonus ?? 0.12;
 
     // Si lo pillaron las últimas veces, se contiene.
-    p -= this.caughtStreak * 0.07;
+    p -= this.caughtStreak * Math.abs(this.config.cheat_caught_penalty ?? 0.07);
 
     return Math.random() < Math.max(0.03, p);
   }
@@ -2348,6 +2635,7 @@ var GameState = __M["src/systems/GameState.js"].GameState;
 var playMusic = __M["src/systems/Music.js"].playMusic;
 var dadoElegido = __M["src/systems/Sfx.js"].dadoElegido;
 var dadosLanzados = __M["src/systems/Sfx.js"].dadosLanzados;
+var Achievements = __M["src/systems/Achievements.js"].Achievements;
 var rollDice = __M["src/systems/FarkleLogic.js"].rollDice;
 var hasScoring = __M["src/systems/FarkleLogic.js"].hasScoring;
 var scoreSelection = __M["src/systems/FarkleLogic.js"].scoreSelection;
@@ -2581,14 +2869,21 @@ class FarkleScene extends Phaser.Scene {
     this.dakuRound = 0;
     this.lastChance = null;
     this.turnsThisRound = 0;
+    this.reinTurnsThisRound = 0;
+    this.reinRollsThisRound = 0;
     this.don = false;
+    this.donRules = null;
+    this.dakuProposedDon = false;
+    this.target = this.cfg.round_target;
     this.reinSkipsTurn = this.reinSkipsTurn || false;
     this.refreshHud();
     this.clearDice();
 
-    // Son exactamente tres rondas y cada una disputa una sola prenda.
-    if (GameState.round === 1) this.beginTurn('rein');
-    else this.tauntPhase(() => this.beginTurn('rein'));
+    // Cada ronda disputa una sola prenda; se juegan las que hagan falta hasta
+    // que alguien se quede sin las tres (ver checkGameOver).
+    const empezar = () => this.prepareDoubleOrNothing(() => this.beginTurn('rein'));
+    if (GameState.round === 1) empezar();
+    else this.tauntPhase(empezar);
   }
 
   /** El jugador elige el tono; Daku responde. Es también un momento de distracción. */
@@ -2599,6 +2894,7 @@ class FarkleScene extends Phaser.Scene {
       (idx) => {
         const tone = TONES[idx];
         GameState.lastTone = tone.key;
+        Achievements.event('tone', { tone: tone.key, nearlyNaked: level === 'nearly_naked' });
         const reinEntry = pick(this.d.act3.rein_taunts[tone.key][level]);
 
         // Intercambio ya escrito de principio a fin: se juega tal cual y no se
@@ -2623,22 +2919,46 @@ class FarkleScene extends Phaser.Scene {
   }
 
   /** Daku propone doble o nada cuando va perdiendo. */
-  offerDoubleOrNothing(next) {
-    const th = this.cfg.double_or_nothing_threshold ?? 3;
-    const losing = GameState.dakuLost >= th && GameState.dakuLost > GameState.reinLost;
-    if (GameState.donOffered || !losing) { next(); return; }
-    GameState.donOffered = true;
+  prepareDoubleOrNothing(next) {
+    const rules = this.cfg.double_or_nothing || { habilitado:false };
+    const limit = rules.rein_requiere_sobriedad_menor_a;
+    if (!rules.habilitado || limit == null || GameState.sobriety >= limit) {
+      this.offerDoubleOrNothing(next); return;
+    }
+    this.dialogue.choices([
+      { label:'Proponer doble o nada' }, { label:'Jugar normal' },
+    ], (idx) => {
+      if (idx !== 0) { this.offerDoubleOrNothing(next); return; }
+      this.don = true;
+      this.donRules = rules;
+      Achievements.event('rein_don_propose');
+      if (rules.tipo === 'puntos') this.target = this.cfg.round_target * (rules.multiplicador ?? 2);
+      const tone = { provoke:'provocar', flirt:'coquetear', stoic:'estoico' }[GameState.lastTone] || 'estoico';
+      const lines = GameState.mechanics?.doble_o_nada_dialogos?.rein_propone?.[tone] || [];
+      this.refreshHud();
+      if (lines.length) this.dialogue.play(lines, next); else next();
+    }, { prompt:'La apuesta puede subir.' });
+  }
 
-    const don = this.d.act3.double_or_nothing;
-    this.dialogue.say(don.propose, () => {
-      this.dialogue.choices(don.options.map((o) => ({ label: o.label })), (idx) => {
-        const opt = don.options[idx];
-        this.don = !!opt.accept;
+  offerDoubleOrNothing(next) {
+    const rules = this.cfg.double_or_nothing || { habilitado:false };
+    const losing = GameState.dakuLost > GameState.reinLost;
+    const chance = rules.daku_propone_siempre ? 1 : (rules.daku_propone_probabilidad ?? 0);
+    if (!rules.habilitado || !rules.daku_propone_cuando_pierde || !losing || Math.random() >= chance) {
+      next(); return;
+    }
+
+    const dialog = GameState.mechanics?.doble_o_nada_dialogos?.daku_propone;
+    const proposal = dialog?.propuesta || [this.d.act3.double_or_nothing.propose];
+    this.dakuProposedDon = true;
+    this.dialogue.play(proposal, () => {
+      this.dialogue.choices([{ label:'Aceptar' }, { label:'Rechazar' }], (idx) => {
+        this.don = idx === 0;
+        this.donRules = rules;
+        if (this.don && rules.tipo === 'puntos') this.target = this.cfg.round_target * (rules.multiplicador ?? 2);
         this.refreshHud();
-        this.dialogue.say(
-          { speaker: 'daku', expression: opt.expression, text: opt.reply },
-          next
-        );
+        const reply = idx === 0 ? dialog?.rein_acepta : dialog?.rein_rechaza;
+        if (reply?.length) this.dialogue.play(reply, next); else next();
       });
     });
   }
@@ -2670,6 +2990,7 @@ class FarkleScene extends Phaser.Scene {
     this.turnPoints = 0;
     this.clearDice();
     this.turnsThisRound++;
+    if (who === 'rein') this.reinTurnsThisRound++;
 
     if (this.turnsThisRound > MAX_TURNS_PER_ROUND) { this.endRound(); return; }
 
@@ -2807,6 +3128,7 @@ class FarkleScene extends Phaser.Scene {
   // ==================================================================
 
   playerRoll() {
+    this.reinRollsThisRound++;
     this.busy = true;
     this.selectable = false;
     this.hideButtons();
@@ -2834,6 +3156,10 @@ class FarkleScene extends Phaser.Scene {
     this.busy = true;
 
     this.turnPoints += r.score;
+    const allSix = this.kept.length + this.selected.size >= this.cfg.dice_count;
+    Achievements.event('selection', {
+      values: vals, rollAgain, allSix, turnPoints: this.turnPoints,
+    });
     this.selected.forEach((i) => { this.kept.push(i); this.dice[i].setKept(true); });
     this.active = this.active.filter((i) => !this.selected.has(i));
     this.selected.clear();
@@ -2882,6 +3208,7 @@ class FarkleScene extends Phaser.Scene {
   }
 
   playerBank() {
+    Achievements.event('bank', { points: this.turnPoints });
     this.reinRound += this.turnPoints;
     this.turnPointsText.setText('');
     this.refreshHud();
@@ -2890,6 +3217,7 @@ class FarkleScene extends Phaser.Scene {
   }
 
   playerFarkle() {
+    Achievements.event('farkle', { turnPoints: this.turnPoints });
     this.turnPoints = 0;
     this.turnPointsText.setText('');
     this.tableText.setText('');
@@ -2903,6 +3231,10 @@ class FarkleScene extends Phaser.Scene {
     this.hideButtons();
     this.selectable = false;
     GameState.drink();
+    Achievements.event('drink', {
+      round: GameState.round, total: GameState.drinks,
+      beforeFinal: GameState.reinLost >= 2 || GameState.dakuLost >= 2,
+    });
     this.refreshHud();
     this.emp.pulse();
     this.drinks.applyCameraWobble();
@@ -3008,6 +3340,21 @@ class FarkleScene extends Phaser.Scene {
     GameState.cheatsTotal++;
     this.pendingCheat = { dieIndex, ...plan };
     this.dice[dieIndex].cheatTo(plan.to, this.ai.cheatFlashMs(GameState.drunkenness));
+
+    // En Pesadilla Daku puede alterar dos dados durante la misma distracción.
+    // Sigue siendo una sola oportunidad de acusación: acertar revierte su turno entero.
+    if (this.cfg.cheat_double_dice && this.active.length > 1) {
+      const changed = values.slice();
+      changed[plan.index] = plan.to;
+      const remainingPositions = changed.map((_, i) => i).filter((i) => i !== plan.index);
+      const second = this.ai.planCheat(remainingPositions.map((i) => changed[i]), GameState.round);
+      if (second) {
+        const originalPosition = remainingPositions[second.index];
+        const secondDieIndex = this.active[originalPosition];
+        this.pendingCheat.extra = { dieIndex: secondDieIndex, ...second, index: originalPosition };
+        this.dice[secondDieIndex].cheatTo(second.to, this.ai.cheatFlashMs(GameState.drunkenness));
+      }
+    }
   }
 
   showAccuseWindow() {
@@ -3029,6 +3376,7 @@ class FarkleScene extends Phaser.Scene {
 
   accuse() {
     this.hideButtons();
+    const empBefore = GameState.emp;
     if (!GameState.spendEmp()) return;
     GameState.accusationsMade++;
     this.emp.pulse();
@@ -3037,6 +3385,10 @@ class FarkleScene extends Phaser.Scene {
     if (this.pendingCheat) {
       // Acierto: Daku pierde el turno.
       GameState.cheatsCaught++;
+      Achievements.event('accuse_correct', {
+        total: GameState.cheatsCaught, empBefore, sobriety: GameState.sobriety,
+        minimumSobriety: this.cfg.sobriety_loss_per_drink ?? .2,
+      });
       GameState.restoreResources(1, 2);
       this.ai.notifyCaught();
       this.pendingCheat = null;
@@ -3050,10 +3402,15 @@ class FarkleScene extends Phaser.Scene {
     } else {
       // Fallo: Rein pierde el turno siguiente.
       GameState.falseAccusations++;
+      Achievements.event('accuse_false', {
+        total: GameState.falseAccusations, round: GameState.round, empAfter: GameState.emp,
+        correctTotal: GameState.cheatsCaught,
+      });
       this.ai.notifyMissed();
       this.reinSkipsTurn = true;
       this.dialogue.play(pick(this.d.act3.cheat_false), () => this.dakuDecide());
     }
+    if (GameState.emp === 0) Achievements.event('emp_zero');
   }
 
   dakuDecide() {
@@ -3124,7 +3481,18 @@ class FarkleScene extends Phaser.Scene {
     const loser = this.reinRound < this.dakuRound ? 'rein' : 'daku';
     if (loser === 'rein') GameState.dakuRoundsWon++;
     else GameState.reinRoundsWon++;
-    const lost = GameState.loseGarments(loser, 1);
+    const garmentCount = this.don && this.donRules?.tipo === 'prendas'
+      ? (this.donRules.prendas_perdidas ?? 2) : 1;
+    const lost = GameState.loseGarments(loser, garmentCount);
+    Achievements.event('garment_lost', { who: loser, round: GameState.round });
+    if (loser === 'daku') {
+      Achievements.event('round_won', { oneTurn: this.reinRollsThisRound === 1 });
+      if (this.don) Achievements.event('don_win');
+    } else {
+      Achievements.event('round_lost');
+      if (this.don) Achievements.event('don_lose');
+      if (this.don && this.dakuProposedDon) Achievements.event('daku_don_win');
+    }
     const pool = loser === 'rein' ? this.d.act3.rein_loses_garment : this.d.act3.daku_loses_garment;
 
     this.dialogue.note('stage',
@@ -3143,20 +3511,34 @@ class FarkleScene extends Phaser.Scene {
     });
   }
 
+  /**
+   * Se pierde al quedarse sin las TRES prendas, no al cabo de N rondas.
+   *
+   * Antes eran exactamente tres rondas y perdía quien hubiera ganado menos.
+   * Con eso, siete de cada diez partidas terminaban con los dos todavía
+   * vestidos y el juego declarando un perdedor que aún llevaba ropa puesta.
+   *
+   * Ahora se juega hasta que alguien pierde camisa, pantalón y ropa interior.
+   * Si van dos a dos, se juega otra ronda. Como cada ronda cuesta una sola
+   * prenda, hacen falta tres rondas como mínimo y cinco como máximo.
+   */
   checkGameOver() {
-    if (GameState.round >= 3) {
-      const loser = GameState.reinRoundsWon > GameState.dakuRoundsWon ? 'daku' : 'rein';
-      this.finish(loser);
+    const reinFuera = GameState.isNaked('rein');
+    const dakuFuera = GameState.isNaked('daku');
+    if (reinFuera || dakuFuera) {
+      this.finish(reinFuera ? 'rein' : 'daku');
       return;
     }
 
     GameState.round++;
-    this.don = false;
+    this.target = this.cfg.round_target;
+    this.donRules = null;
+    this.dakuProposedDon = false;
     this.refreshHud();
     this.startRound();
   }
 
-  /** @param {'rein'|'daku'|'tie'} loser quién se quedó sin nada */
+  /** @param {'rein'|'daku'} loser quién se quedó sin las tres prendas */
   finish(loser) {
     GameState.resolveEnding(loser);
     this.cameras.main.fadeOut(800, 0, 0, 0);
@@ -3175,6 +3557,7 @@ var VNScene = __M["src/scenes/VNScene.js"].VNScene;
 var makeButton = __M["src/systems/Ui.js"].makeButton;
 var GameState = __M["src/systems/GameState.js"].GameState;
 var playMusic = __M["src/systems/Music.js"].playMusic;
+var Achievements = __M["src/systems/Achievements.js"].Achievements;
 // EndingScene.js — Acto 4. Reproduce el ending que resolvió GameState,
 // después los créditos, y ofrece volver a jugar.
 
@@ -3200,8 +3583,22 @@ class EndingScene extends VNScene {
     this.buildStage();
 
     const key = GameState.ending || 'daku_wins';
+    if (!GameState.achievementsFinalized) {
+      GameState.achievementsFinalized = true;
+      Achievements.finish(key, GameState);
+    }
     playMusic(this, key === 'drunk_game_over' ? 'music_gameover' : 'music_endings');
-    const lines = key === 'drunk_game_over' ? DRUNK_GAME_OVER : GameState.dialogues.act4[key];
+    const act4 = GameState.dialogues.act4;
+    const base = key === 'drunk_game_over' ? DRUNK_GAME_OVER : act4[key];
+
+    // El preludio va DELANTE del final, no en su lugar: el que gana sigue
+    // ganando y se ve su splash. Por eso estas escenas no necesitan arte
+    // propio. En el game over por alcohol no hay preludio: la partida se
+    // interrumpió, no se leyó a nadie.
+    const preludio = (key !== 'drunk_game_over' && GameState.prelude)
+      ? act4[`${GameState.prelude}_prelude`] || []
+      : [];
+    const lines = preludio.concat(base);
 
     this.dialogue.play(lines, () => {
       this.dialogue.play(GameState.dialogues.credits, () => this.showSummary(key));
@@ -3245,6 +3642,63 @@ return { "EndingScene": EndingScene };
 })();
 
 // --------------------------------------------------------------------
+// src/scenes/AchievementsScene.js
+__M["src/scenes/AchievementsScene.js"] = (function () {
+var C = __M["src/theme.js"].C;
+var F = __M["src/theme.js"].F;
+var paintBackdrop = __M["src/systems/Ui.js"].paintBackdrop;
+var panel = __M["src/systems/Ui.js"].panel;
+var makeButton = __M["src/systems/Ui.js"].makeButton;
+var Achievements = __M["src/systems/Achievements.js"].Achievements;
+
+class AchievementsScene extends Phaser.Scene {
+  constructor() { super('Achievements'); }
+
+  create() {
+    const { width, height } = this.scale;
+    if (this.textures.exists('bg_room')) {
+      const bg = this.add.image(width / 2, height / 2, 'bg_room');
+      const src = this.textures.get('bg_room').getSourceImage();
+      bg.setScale(Math.max(width / src.width, height / src.height));
+      this.add.rectangle(0, 0, width, height, 0x06101c, 0.68).setOrigin(0);
+    } else paintBackdrop(this, C.roomWarm, C.roomDark);
+    this.add.text(width / 2, 35, 'LOGROS', { fontFamily:F.title, fontSize:'32px', color:'#f4f7fa' }).setOrigin(.5);
+    panel(this, 45, 66, 710, 455, { alpha:.95, radius:6 });
+
+    const entries = Achievements.entries();
+    const unlocked = entries.filter((x) => x.unlocked).length;
+    this.add.text(width / 2, 74, `${unlocked} / ${entries.length} desbloqueados`, {
+      fontFamily:F.body, fontSize:'14px', color:C.textDim,
+    }).setOrigin(.5, 0);
+
+    const categories = [...new Set(entries.map((x) => x.category))];
+    this.page = 0;
+    const render = () => {
+      this.items?.forEach((x) => x.destroy()); this.items = [];
+      const cat = categories[this.page];
+      const list = entries.filter((x) => x.category === cat);
+      this.items.push(this.add.text(width/2, 108, cat.toUpperCase().replaceAll('_',' '), {
+        fontFamily:F.title, fontSize:'19px', color:'#ffd24a',
+      }).setOrigin(.5));
+      list.forEach((a, i) => {
+        const visibleName = a.unlocked || !a.oculto ? a.nombre : '???';
+        const mark = a.unlocked ? '◆' : '◇';
+        this.items.push(this.add.text(90 + (i % 2) * 350, 145 + Math.floor(i / 2) * 42,
+          `${mark} ${visibleName}`, { fontFamily:F.body, fontSize:'15px', color:a.unlocked?'#f4f7fa':'#71859a' }));
+      });
+      this.pageLabel.setText(`${this.page + 1} / ${categories.length}`);
+    };
+    this.pageLabel = this.add.text(width/2, 493, '', { fontFamily:F.body, fontSize:'13px', color:C.textDim }).setOrigin(.5);
+    makeButton(this, 195, 552, 150, 34, 'Anterior', () => { this.page=(this.page-1+categories.length)%categories.length; render(); });
+    makeButton(this, 400, 552, 150, 34, 'Volver', () => this.scene.start('Title'));
+    makeButton(this, 605, 552, 150, 34, 'Siguiente', () => { this.page=(this.page+1)%categories.length; render(); });
+    render();
+  }
+}
+return { "AchievementsScene": AchievementsScene };
+})();
+
+// --------------------------------------------------------------------
 // src/main.js
 __M["src/main.js"] = (function () {
 var BootScene = __M["src/scenes/BootScene.js"].BootScene;
@@ -3254,6 +3708,7 @@ var Act2Scene = __M["src/scenes/Act2Scene.js"].Act2Scene;
 var TutorialScene = __M["src/scenes/TutorialScene.js"].TutorialScene;
 var FarkleScene = __M["src/scenes/FarkleScene.js"].FarkleScene;
 var EndingScene = __M["src/scenes/EndingScene.js"].EndingScene;
+var AchievementsScene = __M["src/scenes/AchievementsScene.js"].AchievementsScene;
 // main.js — configuración de Phaser y arranque.
 
 
@@ -3287,7 +3742,7 @@ const config = {
     mode: Phaser.Scale.NONE,
     autoCenter: Phaser.Scale.NO_CENTER,
   },
-  scene: [BootScene, TitleScene, Act1Scene, Act2Scene, TutorialScene, FarkleScene, EndingScene],
+  scene: [BootScene, TitleScene, Act1Scene, Act2Scene, TutorialScene, FarkleScene, EndingScene, AchievementsScene],
 
   // El paquete que se le pasa a alguien para jugar sin instalar nada se abre
   // con doble clic, o sea con la dirección file:// (ver tools/empaquetar.py).

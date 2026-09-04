@@ -3,6 +3,7 @@
 
 import { C, F } from '../theme.js';
 import { GameState } from '../systems/GameState.js';
+import { Achievements } from '../systems/Achievements.js';
 
 const EXPRESSIONS = ['neutral', 'smile', 'flirty', 'smug', 'surprised', 'dice'];
 const CLOTHING_PORTRAITS = [
@@ -46,9 +47,11 @@ export class BootScene extends Phaser.Scene {
     if (window.LDC_DATOS) {
       this.cache.json.add('dialogues', window.LDC_DATOS.dialogues);
       this.cache.json.add('farkleConfig', window.LDC_DATOS.farkleConfig);
+      this.cache.json.add('mechanicsConfig', window.LDC_DATOS.mechanicsConfig || { achievements:{}, dificultades:{} });
     } else {
       this.load.json('dialogues', 'src/data/dialogues.json');
       this.load.json('farkleConfig', 'src/data/farkle-config.json');
+      this.load.json('mechanicsConfig', 'src/data/mechanics-achievements.json');
     }
 
     // Portraits (opcionales)
@@ -84,6 +87,7 @@ export class BootScene extends Phaser.Scene {
   create() {
     const dialogues = this.cache.json.get('dialogues');
     const config = this.cache.json.get('farkleConfig');
+    const mechanics = this.cache.json.get('mechanicsConfig');
 
     if (!dialogues || !config) {
       this.add.text(40, 40,
@@ -96,7 +100,11 @@ export class BootScene extends Phaser.Scene {
     }
 
     GameState.dialogues = dialogues;
-    GameState.reset(config);
+    GameState.baseConfig = config;
+    GameState.mechanics = mechanics;
+    Achievements.configure(mechanics);
+    GameState.setDifficulty(GameState.selectedDifficulty);
+    GameState.reset(GameState.config);
 
     if (this.missing.length) {
       console.info(

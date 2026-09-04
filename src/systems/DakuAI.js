@@ -72,10 +72,10 @@ export class DakuAI {
     let p = this.cheatProbability;
 
     // Más tentado cuando va perdiendo.
-    if (state.dakuLost > state.reinLost) p += 0.12;
+    if (state.dakuLost > state.reinLost) p += this.config.cheat_losing_bonus ?? 0.12;
 
     // Si lo pillaron las últimas veces, se contiene.
-    p -= this.caughtStreak * 0.07;
+    p -= this.caughtStreak * Math.abs(this.config.cheat_caught_penalty ?? 0.07);
 
     return Math.random() < Math.max(0.03, p);
   }

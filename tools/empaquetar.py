@@ -46,12 +46,19 @@ import json
 import os
 import re
 import shutil
+import stat
 import sys
 import zipfile
 
 RAIZ = os.path.dirname(os.path.abspath(os.path.join(__file__, '..')))
 NOMBRE = 'Los hijos del caos - El ultimo dado'
 ENTRADA = 'src/main.js'
+
+
+def permitir_borrado(func, ruta, _error):
+    """OneDrive puede marcar carpetas del dist como solo lectura."""
+    os.chmod(ruta, stat.S_IWRITE)
+    func(ruta)
 
 
 # ---------------------------------------------------------------- 1. modulos
@@ -223,6 +230,7 @@ def datos_js():
     payload = {
         'dialogues': leer_json('src/data/dialogues.json'),
         'farkleConfig': leer_json('src/data/farkle-config.json'),
+        'mechanicsConfig': leer_json('src/data/mechanics-achievements.json'),
     }
     return (
         '// datos.js — los dialogos y el balance, incrustados.\n'
@@ -376,7 +384,7 @@ def main():
 
     salida_dir = os.path.join(RAIZ, 'dist', NOMBRE)
     if os.path.exists(salida_dir):
-        shutil.rmtree(salida_dir)
+        shutil.rmtree(salida_dir, onerror=permitir_borrado)
     os.makedirs(salida_dir)
 
     for nombre in DEL_PAQUETE:
