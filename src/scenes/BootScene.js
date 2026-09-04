@@ -3,6 +3,8 @@
 
 import { C, F } from '../theme.js';
 import { GameState } from '../systems/GameState.js';
+import * as Achievements from '../systems/Achievements.js';
+import { aplicar, leerGuardada } from '../systems/Difficulty.js';
 
 const EXPRESSIONS = ['neutral', 'smile', 'flirty', 'smug', 'surprised', 'dice'];
 const CLOTHING_PORTRAITS = [
@@ -46,9 +48,11 @@ export class BootScene extends Phaser.Scene {
     if (window.LDC_DATOS) {
       this.cache.json.add('dialogues', window.LDC_DATOS.dialogues);
       this.cache.json.add('farkleConfig', window.LDC_DATOS.farkleConfig);
+      this.cache.json.add('mecanicas', window.LDC_DATOS.mecanicas);
     } else {
       this.load.json('dialogues', 'src/data/dialogues.json');
       this.load.json('farkleConfig', 'src/data/farkle-config.json');
+      this.load.json('mecanicas', 'src/data/mecanicas.json');
     }
 
     // Portraits (opcionales)
@@ -95,8 +99,15 @@ export class BootScene extends Phaser.Scene {
       return;
     }
 
+    const mecanicas = this.cache.json.get('mecanicas') || {};
+    GameState.mecanicas = mecanicas;
+    Achievements.init(mecanicas);
+
+    // La dificultad elegida la última vez manda sobre la config base.
     GameState.dialogues = dialogues;
-    GameState.reset(config);
+    GameState.configBase = config;
+    GameState.config = aplicar(config, mecanicas, leerGuardada());
+    GameState.reset(GameState.config);
 
     if (this.missing.length) {
       console.info(

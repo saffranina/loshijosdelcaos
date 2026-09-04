@@ -223,6 +223,7 @@ def datos_js():
     payload = {
         'dialogues': leer_json('src/data/dialogues.json'),
         'farkleConfig': leer_json('src/data/farkle-config.json'),
+        'mecanicas': leer_json('src/data/mecanicas.json'),
     }
     return (
         '// datos.js — los dialogos y el balance, incrustados.\n'

@@ -7,6 +7,10 @@ export class DakuAI {
     this.config = config;
     this.aggression = config.ai_aggression ?? 0.6;
     this.cheatProbability = config.cheat_probability ?? 0.25;
+    // Estos dos venían fijos en el código y por tanto la dificultad no los
+    // tocaba: en pesadilla hacía trampa igual de poco que en fácil.
+    this.cheatBonusLosing = config.cheat_bonus_losing ?? 0.12;
+    this.cheatPenaltyCaught = Math.abs(config.cheat_penalty_caught ?? 0.07);
     this.caughtStreak = 0;   // si lo pillan seguido, se vuelve más cuidadoso
     this.cheatsThisGame = 0;
   }
@@ -72,10 +76,10 @@ export class DakuAI {
     let p = this.cheatProbability;
 
     // Más tentado cuando va perdiendo.
-    if (state.dakuLost > state.reinLost) p += 0.12;
+    if (state.dakuLost > state.reinLost) p += this.cheatBonusLosing;
 
     // Si lo pillaron las últimas veces, se contiene.
-    p -= this.caughtStreak * 0.07;
+    p -= this.caughtStreak * this.cheatPenaltyCaught;
 
     return Math.random() < Math.max(0.03, p);
   }

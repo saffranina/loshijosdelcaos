@@ -33,7 +33,7 @@ class State {
     // Recursos
     this.emp = c.starting_emp ?? 3;
     this.maxEmp = c.max_emp ?? 5;
-    this.sobriety = 1.0;          // 1 = lúcido, 0 = destruido
+    this.sobriety = c.starting_sobriety ?? 1.0;   // 1 = lúcido, 0 = destruido
     this.drinks = 0;
 
     // Partida
@@ -51,6 +51,18 @@ class State {
 
     this.ending = null;
     this.prelude = null;
+
+    // ---- lo que solo hace falta para los logros ----
+    // Se lleva aquí y no en la escena porque hay logros que se comprueban al
+    // acabar la partida, cuando la escena del Farkle ya no existe.
+    this.tonosUsados = new Set();       // provoke / flirt / stoic
+    this.bebioEnRondas = new Set();     // en qué rondas se pidió un trago
+    this.triplesEnPartida = 0;          // tríos o mejor apartados por Rein
+    this.rachaRondas = 0;               // rondas seguidas ganadas por Rein
+    this.mejorRacha = 0;
+    this.perdioPrendaEnRonda1 = false;
+    this.falsasSeguidas = 0;
+    this.donPropuestasRein = 0;         // veces que Rein propuso doble o nada
   }
 
   // ---- ropa ----

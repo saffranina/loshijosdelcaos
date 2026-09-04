@@ -17,6 +17,7 @@ import { DrinkSystem } from '../systems/DrinkSystem.js';
 import { ClothingManager } from '../systems/ClothingManager.js';
 import { DakuAI } from '../systems/DakuAI.js';
 import { GameState } from '../systems/GameState.js';
+import * as Achievements from '../systems/Achievements.js';
 import { playMusic } from '../systems/Music.js';
 import { dadoElegido, dadosLanzados } from '../systems/Sfx.js';
 import {
@@ -168,6 +169,7 @@ export class FarkleScene extends Phaser.Scene {
     });
 
     this.refreshHud();
+    Achievements.setScene(this);
   }
 
   showSpeaker(speaker, expression) {
@@ -240,6 +242,8 @@ export class FarkleScene extends Phaser.Scene {
     }
     this.reinRound = 0;
     this.dakuRound = 0;
+    this.rondaSoloUnosYCincos = true;
+    this.target = this.cfg.round_target;
     this.lastChance = null;
     this.turnsThisRound = 0;
     this.don = false;
@@ -250,7 +254,7 @@ export class FarkleScene extends Phaser.Scene {
     // Cada ronda disputa una sola prenda; se juegan las que hagan falta hasta
     // que alguien se quede sin las tres (ver checkGameOver).
     if (GameState.round === 1) this.beginTurn('rein');
-    else this.tauntPhase(() => this.beginTurn('rein'));
+    else this.tauntPhase(() => this.offerDoubleOrNothing(() => this.beginTurn('rein')));
   }
 
   /** El jugador elige el tono; Daku responde. Es también un momento de distracción. */
@@ -261,6 +265,10 @@ export class FarkleScene extends Phaser.Scene {
       (idx) => {
         const tone = TONES[idx];
         GameState.lastTone = tone.key;
+        GameState.tonosUsados.add(tone.key);
+        if (tone.key === 'flirt' && GameState.nakednessLevel('rein') === 'nearly_naked') {
+          Achievements.unlock('tension_insostenible');
+        }
         const reinEntry = pick(this.d.act3.rein_taunts[tone.key][level]);
 
         // Intercambio ya escrito de principio a fin: se juega tal cual y no se
@@ -284,25 +292,91 @@ export class FarkleScene extends Phaser.Scene {
     );
   }
 
-  /** Daku propone doble o nada cuando va perdiendo. */
+  /**
+   * Doble o nada. Lo puede proponer cualquiera de los dos.
+   *
+   * Antes esto era código muerto: existía el método, nadie lo llamaba, y al
+   * perder la ronda se quitaba una prenda igual. Ahora hace algo de verdad y
+   * cambia según la dificultad:
+   *
+   *   tipo 'puntos'   la ronda vale el doble (fácil de digerir)
+   *   tipo 'prendas'  quien pierda se quita dos en vez de una
+   *
+   * Rein solo puede proponerlo con algo encima: por debajo de cierta
+   * sobriedad. Sobrio no se le ocurre.
+   */
   offerDoubleOrNothing(next) {
-    const th = this.cfg.double_or_nothing_threshold ?? 3;
-    const losing = GameState.dakuLost >= th && GameState.dakuLost > GameState.reinLost;
-    if (GameState.donOffered || !losing) { next(); return; }
-    GameState.donOffered = true;
+    const c = this.cfg;
+    if (!c.don_enabled || this.don) { next(); return; }
 
     const don = this.d.act3.double_or_nothing;
-    this.dialogue.say(don.propose, () => {
-      this.dialogue.choices(don.options.map((o) => ({ label: o.label })), (idx) => {
-        const opt = don.options[idx];
-        this.don = !!opt.accept;
-        this.refreshHud();
-        this.dialogue.say(
-          { speaker: 'daku', expression: opt.expression, text: opt.reply },
-          next
-        );
-      });
+    const nuevos = GameState.mecanicas?.doble_o_nada_dialogos;
+
+    const dakuVaPerdiendo = GameState.dakuLost > GameState.reinLost;
+    const dakuQuiere = c.don_daku_always
+      || (c.don_daku_when_losing && dakuVaPerdiendo && Math.random() < c.don_daku_chance);
+
+    if (dakuQuiere && !GameState.donOffered) {
+      GameState.donOffered = true;
+      this.dakuProponeDon(nuevos, don, next);
+      return;
+    }
+
+    // Rein necesita haber bebido algo para atreverse.
+    const reinPuede = nuevos && GameState.sobriety < (c.don_rein_sobriety ?? 0);
+    if (reinPuede) { this.ofrecerDonAlJugador(nuevos, next); return; }
+
+    next();
+  }
+
+  dakuProponeDon(nuevos, viejo, next) {
+    const propuesta = nuevos?.daku_propone?.propuesta || [viejo?.propose].filter(Boolean);
+    this.dialogue.play(propuesta, () => {
+      this.dialogue.choices(
+        [{ label: 'Acepto' }, { label: 'No' }],
+        (idx) => {
+          const acepta = idx === 0;
+          const respuesta = acepta
+            ? nuevos?.daku_propone?.rein_acepta
+            : nuevos?.daku_propone?.rein_rechaza;
+          if (acepta) this.activarDon('daku');
+          this.dialogue.play(respuesta || [], next);
+        },
+        { prompt: 'Doble o nada.' }
+      );
     });
+  }
+
+  ofrecerDonAlJugador(nuevos, next) {
+    this.dialogue.choices(
+      [{ label: 'Doble o nada' }, { label: 'Jugar normal' }],
+      (idx) => {
+        if (idx !== 0) { next(); return; }
+        GameState.donPropuestasRein++;
+        if (GameState.donPropuestasRein >= 3) Achievements.unlock('jugador_compulsivo');
+        this.activarDon('rein');
+        // Daku contesta según el tono que Rein venga usando.
+        const tono = GameState.lastTone === 'flirt' ? 'coquetear'
+          : GameState.lastTone === 'stoic' ? 'estoico' : 'provocar';
+        this.dialogue.play(nuevos.rein_propone[tono] || [], next);
+      },
+      { prompt: '¿Subes la apuesta?' }
+    );
+  }
+
+  activarDon(quienLoPropuso) {
+    this.don = true;
+    this.donAutor = quienLoPropuso;
+
+    // Tipo 'puntos': la ronda se juega a la meta doble. Es la lectura que le
+    // damos a "la ronda vale el doble" — la ronda se hace larga y arriesgada,
+    // con más ocasiones de hacer Farkle, pero la ropa que se juega sigue
+    // siendo una prenda.
+    // Tipo 'prendas': la meta no cambia y quien pierda se quita dos.
+    if (this.cfg.don_type === 'puntos') {
+      this.target = this.cfg.round_target * (this.cfg.don_multiplier ?? 2);
+    }
+    this.refreshHud();
   }
 
   /**
@@ -330,6 +404,7 @@ export class FarkleScene extends Phaser.Scene {
   beginTurn(who) {
     this.turn = who;
     this.turnPoints = 0;
+    this.tirosEsteTurno = 0;
     this.clearDice();
     this.turnsThisRound++;
 
@@ -469,6 +544,7 @@ export class FarkleScene extends Phaser.Scene {
   // ==================================================================
 
   playerRoll() {
+    this.tirosEsteTurno = (this.tirosEsteTurno || 0) + 1;
     this.busy = true;
     this.selectable = false;
     this.hideButtons();
@@ -496,6 +572,7 @@ export class FarkleScene extends Phaser.Scene {
     this.busy = true;
 
     this.turnPoints += r.score;
+    this.comprobarLogrosDeJugada(vals, r.score);
     this.selected.forEach((i) => { this.kept.push(i); this.dice[i].setKept(true); });
     this.active = this.active.filter((i) => !this.selected.has(i));
     this.selected.clear();
@@ -505,8 +582,10 @@ export class FarkleScene extends Phaser.Scene {
     this.turnPointsText.setText(`en la mesa: ${this.turnPoints}`);
 
     const seguir = () => {
-      if (rollAgain) this.time.delayedCall(320, () => this.playerRoll());
-      else this.playerBank();
+      if (rollAgain) {
+        if (this.turnPoints > 1500) Achievements.unlock('adicto_al_riesgo');
+        this.time.delayedCall(320, () => this.playerRoll());
+      } else this.playerBank();
     };
     if (!this.reaccionJugada('rein', r.score, seguir)) seguir();
   }
@@ -543,7 +622,37 @@ export class FarkleScene extends Phaser.Scene {
     return true;
   }
 
+  /**
+   * Logros que dependen de QUÉ apartó Rein, no de cuánto sumó.
+   * Se mira la selección concreta, antes de que los dados se muevan.
+   */
+  comprobarLogrosDeJugada(vals, score) {
+    const cuenta = {};
+    vals.forEach((v) => { cuenta[v] = (cuenta[v] || 0) + 1; });
+    const distintos = Object.keys(cuenta).length;
+
+    // Escalera 1-6: los seis dados, todos distintos.
+    if (vals.length === 6 && distintos === 6) Achievements.unlock('escalera_de_marfil');
+
+    // Los seis dados apartados de una sola vez.
+    if (vals.length === 6) Achievements.unlock('seis_de_seis');
+
+    // Trío o mejor.
+    if (Object.values(cuenta).some((n) => n >= 3)) GameState.triplesEnPartida++;
+
+    // Dados calientes: apartó todo lo que quedaba en la mesa y por tanto
+    // vuelve a tirar los seis.
+    if (this.kept.length + vals.length >= this.cfg.dice_count) {
+      Achievements.unlock('dados_calientes');
+    }
+
+    // Solo unos y cincos en toda la ronda.
+    if (!vals.every((v) => v === 1 || v === 5)) this.rondaSoloUnosYCincos = false;
+  }
+
   playerBank() {
+    if (this.turnPoints > 0 && this.turnPoints < 200) Achievements.unlock('gallina');
+    if (this.tirosEsteTurno === 1) Achievements.unlock('conservador');
     this.reinRound += this.turnPoints;
     this.turnPointsText.setText('');
     this.refreshHud();
@@ -552,6 +661,7 @@ export class FarkleScene extends Phaser.Scene {
   }
 
   playerFarkle() {
+    if (this.turnPoints > 1000) Achievements.unlock('codicia');
     this.turnPoints = 0;
     this.turnPointsText.setText('');
     this.tableText.setText('');
@@ -565,6 +675,8 @@ export class FarkleScene extends Phaser.Scene {
     this.hideButtons();
     this.selectable = false;
     GameState.drink();
+    GameState.bebioEnRondas.add(GameState.round);
+    if (this.lastChance) Achievements.unlock('brindis');
     this.refreshHud();
     this.emp.pulse();
     this.drinks.applyCameraWobble();
@@ -574,6 +686,7 @@ export class FarkleScene extends Phaser.Scene {
       this.dialogue.note('stage', 'El mundo se inclina. Rein ya no puede distinguir los dados.');
       this.time.delayedCall(1500, () => {
         GameState.ending = 'drunk_game_over';
+        Achievements.alTerminarPartida(GameState);
         this.cameras.main.fadeOut(600, 0, 0, 0);
         this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Ending'));
       });
@@ -693,12 +806,19 @@ export class FarkleScene extends Phaser.Scene {
     this.hideButtons();
     if (!GameState.spendEmp()) return;
     GameState.accusationsMade++;
+    if (GameState.emp === 0) Achievements.unlock('sin_bateria');
     this.emp.pulse();
     this.refreshHud();
 
     if (this.pendingCheat) {
       // Acierto: Daku pierde el turno.
       GameState.cheatsCaught++;
+      GameState.falsasSeguidas = 0;
+      Achievements.unlock('descarga');
+      // Acusó con la última carga que le quedaba.
+      if (GameState.emp === 0) Achievements.unlock('francotirador');
+      const minSob = this.cfg.sobriety_loss_per_drink ?? 0.2;
+      if (GameState.sobriety <= minSob + 0.001) Achievements.unlock('vision_doble');
       GameState.restoreResources(1, 2);
       this.ai.notifyCaught();
       this.pendingCheat = null;
@@ -712,6 +832,9 @@ export class FarkleScene extends Phaser.Scene {
     } else {
       // Fallo: Rein pierde el turno siguiente.
       GameState.falseAccusations++;
+      GameState.falsasSeguidas++;
+      if (GameState.falsasSeguidas >= 2) Achievements.unlock('nunca_aprendes');
+      if (GameState.round === 1) Achievements.unlock('gatillo_facil');
       this.ai.notifyMissed();
       this.reinSkipsTurn = true;
       this.dialogue.play(pick(this.d.act3.cheat_false), () => this.dakuDecide());
@@ -786,7 +909,31 @@ export class FarkleScene extends Phaser.Scene {
     const loser = this.reinRound < this.dakuRound ? 'rein' : 'daku';
     if (loser === 'rein') GameState.dakuRoundsWon++;
     else GameState.reinRoundsWon++;
-    const lost = GameState.loseGarments(loser, 1);
+
+    if (loser === 'daku' && this.rondaSoloUnosYCincos && this.reinRound > 0) {
+      Achievements.unlock('de_uno_en_uno');
+    }
+
+    // Racha de rondas seguidas de Rein, para el logro correspondiente.
+    GameState.rachaRondas = loser === 'daku' ? GameState.rachaRondas + 1 : 0;
+    GameState.mejorRacha = Math.max(GameState.mejorRacha, GameState.rachaRondas);
+
+    // Doble o nada: con el tipo 'prendas' la ronda cuesta dos en vez de una.
+    // Con el tipo 'puntos' no cambia la ropa, solo lo que valía la ronda.
+    const cuantas = (this.don && this.cfg.don_type === 'prendas')
+      ? (this.cfg.don_garments ?? 2) : 1;
+    const lost = GameState.loseGarments(loser, cuantas);
+
+    if (this.don) {
+      if (loser === 'daku') Achievements.unlock('todo_o_nada');
+      else Achievements.unlock('mal_calculo');
+      if (loser === 'rein' && this.donAutor === 'daku') {
+        Achievements.unlock('la_casa_siempre_gana');
+      }
+    }
+    if (GameState.round === 1 && loser === 'rein') GameState.perdioPrendaEnRonda1 = true;
+    this.don = false;
+    this.donAutor = null;
     const pool = loser === 'rein' ? this.d.act3.rein_loses_garment : this.d.act3.daku_loses_garment;
 
     this.dialogue.note('stage',
@@ -832,6 +979,7 @@ export class FarkleScene extends Phaser.Scene {
   /** @param {'rein'|'daku'} loser quién se quedó sin las tres prendas */
   finish(loser) {
     GameState.resolveEnding(loser);
+    Achievements.alTerminarPartida(GameState);
     this.cameras.main.fadeOut(800, 0, 0, 0);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Ending'));
   }
