@@ -50,6 +50,7 @@ class State {
     this.falseAccusations = 0;
 
     this.ending = null;
+    this.prelude = null;
   }
 
   // ---- ropa ----
@@ -140,12 +141,40 @@ class State {
    * @param {'rein'|'daku'} loser
    */
   resolveEnding(loser) {
-    if (loser === 'daku') {
-      this.ending = 'rein_wins';
-    } else {
-      this.ending = 'daku_wins';
-    }
+    this.ending = loser === 'daku' ? 'rein_wins' : 'daku_wins';
+    this.prelude = this.resolvePrelude();
     return this.ending;
+  }
+
+  /**
+   * Escena que se juega ANTES del final, según cómo se leyó a Daku.
+   *
+   * No sustituye al final: quien gana sigue ganando y se ve su splash. Esto
+   * es un momento extra que se gana jugando de una forma concreta.
+   *
+   * Las dos condiciones no pueden darse a la vez: cazarlas todas exige haber
+   * acusado, y la otra exige no haber acusado nunca.
+   *
+   * @returns {'all_caught'|'none_caught'|null}
+   */
+  resolvePrelude() {
+    const c = this.config || {};
+
+    // Las vio todas y no acusó ni una vez de más.
+    const minCazadas = c.all_caught_min_cheats ?? 1;
+    if (this.cheatsTotal >= minCazadas &&
+        this.cheatsCaught === this.cheatsTotal &&
+        this.falseAccusations === 0) {
+      return 'all_caught';
+    }
+
+    // Daku hizo trampa varias veces y el jugador no dijo nada en toda la noche.
+    const minCallado = c.none_caught_min_cheats ?? 3;
+    if (this.cheatsTotal >= minCallado && this.accusationsMade === 0) {
+      return 'none_caught';
+    }
+
+    return null;
   }
 }
 

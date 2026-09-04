@@ -1,7 +1,7 @@
 # Los hijos del caos: El último dado — estado del juego
 
 Documento de contexto para trabajar los diálogos con otra IA.
-Escrito el 3 de septiembre de 2026. Refleja el código tal como está,
+Actualizado el 4 de septiembre de 2026. Refleja el código tal como está,
 no el diseño original.
 
 ---
@@ -68,38 +68,33 @@ pierda el turno; fallar hace que lo pierda Rein y gasta la carga igual.
 
 ---
 
-## 3. El sistema de finales — aquí está el problema
+## 3. El sistema de finales
 
-Hay **cuatro finales escritos** más un game over. Pero el código solo produce
-tres de ellos.
+Hay **dos finales** y un game over. Además, dos **preludios**: escenas que se
+juegan *antes* del final si se leyó a Daku de una forma concreta.
 
-| Final | Líneas escritas | ¿Se puede ver jugando? | Splash |
+| Final | Líneas | ¿Se ve? | Splash |
 |---|---|---|---|
 | `rein_wins` | 20 | Sí | Existe |
 | `daku_wins` | 13 | Sí | Existe |
-| `all_caught` | 20 | **No** | **Falta** |
-| `none_caught` | 29 | **No** | **Falta** |
 | Game over por alcohol | 4 | Sí | No tiene, y no lo necesita |
 
-`resolveEnding()` en `src/systems/GameState.js` solo mira quién se quedó sin
-ropa. Nunca comprueba si el jugador cazó todas las trampas o ninguna. Las 49
-líneas de los dos finales secretos **llevan desde el principio sin poder
-verse**.
+| Preludio | Líneas | Cuándo |
+|---|---|---|
+| `all_caught_prelude` | 10 | Cazó todas las trampas y no acusó ni una vez en falso |
+| `none_caught_prelude` | 13 | Daku hizo 3+ trampas y el jugador no acusó jamás |
 
-### Lo que haría falta para activarlos
+**Los preludios no sustituyen al final.** Van delante: se juega el preludio, y
+después el final normal con su splash. Quien gana sigue ganando. Por eso estas
+dos escenas **no necesitan arte propio**.
 
-El estado del juego ya lleva la cuenta de todo lo necesario: trampas totales,
-trampas cazadas, acusaciones hechas y acusaciones falsas. La condición del
-diseño original es:
+Las dos condiciones son mutuamente excluyentes: cazarlas todas exige haber
+acusado, y la otra exige no haber acusado nunca.
 
-```
-all_caught   → cazó todas las trampas Y cero acusaciones falsas
-none_caught  → Daku hizo varias trampas Y el jugador no acusó ni una vez
-```
+Los umbrales se tocan en `farkle-config.json`:
+`all_caught_min_cheats` (1) y `none_caught_min_cheats` (3).
 
-Son unas cinco líneas de código. **La parte difícil no es programarlo.**
-
-### Cuánto se verían (medido sobre 2000 partidas simuladas por estilo)
+### Cuánto se ven (2000 partidas simuladas por estilo)
 
 | Estilo de jugador | all_caught | none_caught |
 |---|---|---|
@@ -108,123 +103,57 @@ Son unas cinco líneas de código. **La parte difícil no es programarlo.**
 | Nunca acusa | 0% | **92,5%** |
 | Acusa a lo loco | 0% | 0% |
 
-Las condiciones funcionan bien como diseño: premian dos formas opuestas y
-deliberadas de jugar.
+---
+
+## 4. Historial de esta decisión
+
+Los dos preludios **eran** finales completos y separados, de 20 y 29 líneas,
+que sustituían al de ganar/perder y pedían cada uno su propio splash. Nunca se
+podían ver jugando: el código no comprobaba la condición.
+
+La autora decidió convertirlos en preludios, más cortos, y reescribió el texto
+quitando todo lo que presuponía un desenlace concreto — antes había líneas como
+*"la ropa da igual"* o *"no vine a ganar"*, que chocaban con el final de quién
+gana. También quitó la mención al doble o nada, una mecánica que no existe.
+
+El texto anterior sigue en el historial de git por si hace falta.
 
 ---
 
-## 4. LA PREGUNTA ABIERTA (esto es lo que hay que resolver)
+## 5. El texto actual de los preludios
 
-La autora **no está convencida** de dos cosas:
-
-1. Que `all_caught` y `none_caught` deban ser **finales aparte** que sustituyen
-   al de "gana Rein / gana Daku".
-2. Que sean **tan largos** (20 y 29 líneas, frente a 13–20 de los normales).
-
-Su propuesta alternativa: que el splash de la escena secreta vaya **antes** del
-splash final de quién ganó, como una escena extra en vez de un final completo.
-
-### El argumento en contra (para tenerlo en cuenta)
-
-Al leer el texto actual, los dos parecen finales completos que **contradicen**
-al final de quién gana:
-
-- En `all_caught`, Daku dice literalmente *"y no hablo de la ropa. **La ropa da
-  igual**"*. Toda la escena va de que el resultado del juego dejó de importar.
-- En `none_caught`, Rein dice *"**no vine a ganar**"*: reveló que perdió a
-  propósito. La escena ya presupone un resultado concreto.
-
-Encadenar después un splash de victoria chocaría con esas líneas.
-
-### Lo que se busca
-
-Decidir una de estas tres, y reescribir el texto en consecuencia:
-
-- **A.** Se quedan como finales completos que sustituyen al normal, pero **más
-  cortos** (bajarlos a ~12–15 líneas).
-- **B.** Se convierten en **escenas previas** al final normal, y entonces hay
-  que quitarles todo lo que presupone un desenlace ("la ropa da igual", "no
-  vine a ganar") para que encajen con cualquier resultado.
-- **C.** Otra estructura.
-
----
-
-## 5. El texto actual de los dos finales
-
-### `all_caught` (20 líneas)
+### `all_caught_prelude` (10 líneas)
 
 ```
-stage: Rein acusó cada trampa. Ninguna falsa acusación.
-daku:  ...
-stage: Daku está quieto. No sonríe. La máscara se cayó.
+stage: Antes de que ninguno se mueva, Daku se detiene.
 daku:  Las viste todas.
 rein:  Todas.
-daku:  ¿Cómo? ¿Cómo es posible? Nadie— Nunca nadie—
+daku:  ¿Cómo? Nadie— nunca nadie—
 rein:  Te estaba mirando.
-daku:  No. Todos me miran. Todos. Todo el tiempo. Pero tú... tú me estabas
-       viendo. De verdad.
-stage: Silencio largo. Daku baja la mirada. Cuando la sube, no hay sonrisa. No
-       hay coqueteo. No hay juego.
-daku:  ¿Sabes lo que se siente? ¿Que alguien vea cada truco? ¿Cada movimiento?
-       No se siente como perder un juego. Se siente como... estar desnudo. Y no
-       hablo de la ropa. La ropa da igual.
-stage: Pausa.
-daku:  Petri nunca me vio así. Ella ve lo que uso. Lo que hago. No lo que soy.
-       Nadie ve lo que soy.
-stage: Su voz se quiebra un milímetro. Lo controla.
+daku:  No. Todos me miran. Tú me estabas viendo. De verdad.
+stage: Silencio. Cuando Daku habla, no sonríe.
 daku:  No me mires así, Diermissen.
 rein:  ¿Así cómo?
 daku:  Como si me conocieras.
-stage: Silencio.
-rein:  ¿Y si te conozco?
-stage: Daku no tiene respuesta. Se acerca despacio. Sin juegos. Sin actuación.
-       Solo él.
-[SPLASH: ending_all_caught] Escena íntima. Suave. Vulnerable. Diferente a
-todos los otros endings.
 ```
 
-### `none_caught` (29 líneas)
+### `none_caught_prelude` (13 líneas)
 
 ```
-daku:  Buena partida, soldadito. Un poco fácil, pero buena.
+daku:  Buena partida, soldadito.
 stage: Pausa. Rein no dice nada.
 daku:  ¿No me vas a decir que hice trampa?
 rein:  No.
 daku:  ¿Por qué no?
-stage: Silencio.
 rein:  Porque ya lo sé.
 stage: La sonrisa de Daku se congela.
 daku:  ...¿Qué?
-rein:  El tercer tiro. El quinto. El octavo. El del doble o nada.
+rein:  El tercer tiro. El quinto. El octavo.
 daku:  Los viste.
 rein:  Los vi todos.
-daku:  ¿Todos? ¿Y no dijiste nada? ¿Por qué?
-stage: Pausa larga. Rein lo mira directamente.
-rein:  Porque no vine a ganar.
-stage: Silencio absoluto.
-daku:  ...Sabías. Desde el principio.
-rein:  Desde el principio.
-daku:  Sabías y dejaste que yo... todo esto... las trampas, el juego, el—
-rein:  Sí.
-daku:  Entonces yo nunca tuve el control.
-rein:  No.
-stage: Daku lo mira. Algo se desarma. Todo lo que fue esta noche — la sonrisa,
-       las trampas, la seducción, el juego — fue de Daku. Y de pronto no. De
-       pronto nunca lo fue.
-daku:  ¿Por qué?
-rein:  Porque quería que eligieras.
-stage: Silencio.
-stage: Y Daku entiende. Rein le dio el control a propósito. Le dio la victoria.
-       No porque no pudiera ganar — sino porque quería que Daku tuviera la
-       elección. La elección que nunca tiene.
-stage: Por primera vez en la noche, es Rein quien se acerca.
-[SPLASH: ending_none_caught] NSFW — el poder se invirtió, pero no por la
-fuerza. Por la entrega.
+daku:  ¿Y no dijiste nada?
+stage: Rein no responde. No necesita hacerlo.
 ```
-
-**Ojo con una línea:** en `none_caught`, Rein menciona *"el del doble o nada"*.
-El doble o nada **no existe en el juego** (ver cabos sueltos). Esa línea hay que
-retocarla o implementar la mecánica.
 
 ---
 
@@ -241,7 +170,7 @@ Todo vive en `src/data/dialogues.json`. Una línea normal:
 - **`expression`** (solo rein y daku): `neutral`, `smile`, `flirty`, `smug`,
   `surprised`, `dice`.
 - Un splash a pantalla completa:
-  `{ "splash": "ending_all_caught", "caption": "descripción" }`
+  `{ "splash": "ending_rein_wins", "caption": "descripción" }`
 
 También existen **intercambios**: una entrada puede ser una lista de líneas que
 van siempre juntas, en vez de un texto suelto.
@@ -272,14 +201,7 @@ la intensidad sexual escale a lo largo de la partida.
 
 **El doble o nada no existe.** `offerDoubleOrNothing()` está escrito pero no lo
 llama nadie, y aunque lo hiciera, al perder la ronda se quita una prenda igual.
-Sus líneas de diálogo (`act3.double_or_nothing`) están escritas sin usarse. Un
-final las menciona.
-
-**Falta el arte de dos finales.** `ending_all_caught` y `ending_none_caught` no
-existen como PNG. Sin ellos, ese momento se ve como un rectángulo de color.
-
-**`none_caught_min_cheats` está en la configuración pero no lo usa nadie.** Otro
-resto de los finales secretos nunca implementados.
+Sus líneas de diálogo (`act3.double_or_nothing`) están escritas sin usarse.
 
 **El texto del game over por alcohol está dentro del código**, en
 `EndingScene.js`, no en el JSON como todo lo demás. Son 4 líneas.

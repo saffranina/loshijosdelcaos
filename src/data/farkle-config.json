@@ -12,5 +12,6 @@
   "double_or_nothing_threshold": 3,
   "cheat_flash_ms_sober": 520,
   "cheat_flash_ms_drunk": 170,
+  "all_caught_min_cheats": 1,
   "none_caught_min_cheats": 3
 }

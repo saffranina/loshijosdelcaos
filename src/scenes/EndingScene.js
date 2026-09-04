@@ -29,7 +29,17 @@ export class EndingScene extends VNScene {
 
     const key = GameState.ending || 'daku_wins';
     playMusic(this, key === 'drunk_game_over' ? 'music_gameover' : 'music_endings');
-    const lines = key === 'drunk_game_over' ? DRUNK_GAME_OVER : GameState.dialogues.act4[key];
+    const act4 = GameState.dialogues.act4;
+    const base = key === 'drunk_game_over' ? DRUNK_GAME_OVER : act4[key];
+
+    // El preludio va DELANTE del final, no en su lugar: el que gana sigue
+    // ganando y se ve su splash. Por eso estas escenas no necesitan arte
+    // propio. En el game over por alcohol no hay preludio: la partida se
+    // interrumpió, no se leyó a nadie.
+    const preludio = (key !== 'drunk_game_over' && GameState.prelude)
+      ? act4[`${GameState.prelude}_prelude`] || []
+      : [];
+    const lines = preludio.concat(base);
 
     this.dialogue.play(lines, () => {
       this.dialogue.play(GameState.dialogues.credits, () => this.showSummary(key));
