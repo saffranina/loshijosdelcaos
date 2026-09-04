@@ -14,11 +14,14 @@ export function difficultyConfig(base, mechanics, key = 'normal') {
     starting_emp: d.emp_inicial,
     max_emp: d.emp_maximo,
     emp_per_drink: d.emp_por_trago,
+    correct_accusation_emp_restore: d.emp_al_acusar_correctamente ?? 0,
     starting_sobriety: d.sobriedad_inicial,
     sobriety_loss_per_drink: Math.abs(d.sobriedad_por_trago),
     ai_aggression: d.ia_agresividad,
     double_or_nothing: d.doble_o_nada || { habilitado: false },
     cheat_double_dice: !!d.trampa_dados_dobles,
+    player_sabotage_enabled: !!d.trampa_rein_habilitada,
+    player_sabotage_probability: d.trampa_rein_probabilidad ?? 0,
   };
 }
 

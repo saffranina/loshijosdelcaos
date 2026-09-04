@@ -1313,6 +1313,11 @@ window.LDC_DATOS = {
      "nombre": "Sin batería",
      "oculto": false,
      "condicion": "llegar_a_0_emp"
+    },
+    "escudo_mental": {
+     "nombre": "Escudo mental",
+     "oculto": false,
+     "condicion": "defender_tirada_saboteada"
     }
    },
    "alcohol": {
@@ -1461,6 +1466,7 @@ window.LDC_DATOS = {
     "emp_inicial": 5,
     "emp_maximo": 5,
     "emp_por_trago": 1,
+    "emp_al_acusar_correctamente": 1,
     "sobriedad_inicial": 1.0,
     "sobriedad_por_trago": -0.15,
     "sobriedad_game_over": 0,
@@ -1481,6 +1487,7 @@ window.LDC_DATOS = {
     "emp_inicial": 5,
     "emp_maximo": 5,
     "emp_por_trago": 1,
+    "emp_al_acusar_correctamente": 0,
     "sobriedad_inicial": 1.0,
     "sobriedad_por_trago": -0.2,
     "sobriedad_game_over": 0,
@@ -1506,6 +1513,7 @@ window.LDC_DATOS = {
     "emp_inicial": 3,
     "emp_maximo": 5,
     "emp_por_trago": 1,
+    "emp_al_acusar_correctamente": 0,
     "sobriedad_inicial": 1.0,
     "sobriedad_por_trago": -0.25,
     "sobriedad_game_over": 0,
@@ -1527,11 +1535,14 @@ window.LDC_DATOS = {
     "trampa_bonus_perdiendo": 0.15,
     "trampa_penalizacion_pillado": -0.03,
     "trampa_dados_dobles": true,
-    "brillo_trampa_sobrio_ms": 150,
-    "brillo_trampa_borracho_ms": 40,
+    "trampa_rein_habilitada": true,
+    "trampa_rein_probabilidad": 0.4,
+    "brillo_trampa_sobrio_ms": 80,
+    "brillo_trampa_borracho_ms": 20,
     "emp_inicial": 2,
     "emp_maximo": 4,
     "emp_por_trago": 1,
+    "emp_al_acusar_correctamente": 0,
     "sobriedad_inicial": 1.0,
     "sobriedad_por_trago": -0.35,
     "sobriedad_game_over": 0,

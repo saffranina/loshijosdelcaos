@@ -35,6 +35,7 @@ const CONDITION_TEXT = {
   todo_emp_en_acusaciones_falsas: 'Gasta todo tu EMP únicamente en acusaciones falsas.',
   terminar_sin_acusar: 'Termina una partida sin acusar a Daku.',
   llegar_a_0_emp: 'Quédate sin EMP.',
+  defender_tirada_saboteada: 'Usa EMP para restaurar un dado que Daku alteró en tu tirada.',
   ganar_sin_beber: 'Gana una partida sin beber.',
   beber_3_veces: 'Bebe tres veces en una partida.',
   beber_en_todas_las_rondas: 'Bebe al menos una vez en cada ronda.',

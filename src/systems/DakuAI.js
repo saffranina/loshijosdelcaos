@@ -121,6 +121,28 @@ export class DakuAI {
     return { index: pick.index, from: pick.from, to: pick.to, magnitude: pick.magnitude };
   }
 
+  /** En Pesadilla, busca el cambio que más perjudica la tirada de Rein. */
+  planSabotage(dice) {
+    const before = this._roughScore(dice);
+    if (before <= 0) return null;
+    const candidates = [];
+    for (let i = 0; i < dice.length; i++) {
+      for (let v = 1; v <= 6; v++) {
+        if (v === dice[i]) continue;
+        const after = dice.slice();
+        after[i] = v;
+        const loss = before - this._roughScore(after);
+        if (loss <= 0) continue;
+        candidates.push({
+          index:i, from:dice[i], to:v, loss,
+          visibility:Math.abs(v - dice[i]),
+        });
+      }
+    }
+    candidates.sort((a, b) => b.loss - a.loss || a.visibility - b.visibility);
+    return candidates[0] || null;
+  }
+
   /** Puntuación aproximada del tiro completo (solo para comparar opciones). */
   _roughScore(dice) {
     const keeps = validKeeps(dice);

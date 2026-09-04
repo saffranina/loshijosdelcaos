@@ -364,7 +364,10 @@ export class FarkleScene extends Phaser.Scene {
     this.turnPoints = 0;
     this.clearDice();
     this.turnsThisRound++;
-    if (who === 'rein') this.reinTurnsThisRound++;
+    if (who === 'rein') {
+      this.reinTurnsThisRound++;
+      this.playerSabotageChecked = false;
+    }
 
     if (this.turnsThisRound > MAX_TURNS_PER_ROUND) { this.endRound(); return; }
 
@@ -509,17 +512,86 @@ export class FarkleScene extends Phaser.Scene {
     this.dialogue.note('stage', `Turno de Rein — ${this.turnPoints} en la mesa.`);
     this.portraits.rein.setExpression('dice');
 
-    this.rollFor('rein', (values) => {
-      this.busy = false;
-      if (!hasScoring(values)) { this.playerFarkle(); return; }
-      this.selectable = true;
-      this.updateSelectionUi();
-      this.setButtons([
-        { label: 'Apartar y tirar', enabled: false, onClick: () => this.playerKeep(true) },
-        { label: 'Apartar y plantarse', enabled: false, onClick: () => this.playerKeep(false) },
-        { label: '🥃 Beber', enabled: GameState.sobriety > 0, onClick: () => this.playerDrink('turn') },
-      ]);
-    });
+    this.rollFor('rein', () => this.maybeSabotagePlayerRoll());
+  }
+
+  /** En Pesadilla, Daku tiene una oportunidad de tocar la primera tirada del turno de Rein. */
+  maybeSabotagePlayerRoll() {
+    if (!this.cfg.player_sabotage_enabled || this.playerSabotageChecked) {
+      this.finishPlayerRoll();
+      return;
+    }
+    this.playerSabotageChecked = true;
+    this.pendingPlayerCheat = null;
+
+    if (Math.random() < (this.cfg.player_sabotage_probability ?? 0)) {
+      const plan = this.ai.planSabotage(this.currentValues());
+      if (plan) {
+        const dieIndex = this.active[plan.index];
+        this.pendingPlayerCheat = { dieIndex, ...plan };
+        GameState.cheatsTotal++;
+        this.dice[dieIndex].cheatTo(plan.to, this.ai.cheatFlashMs(GameState.drunkenness));
+      }
+    }
+    this.showPlayerDefenseWindow();
+  }
+
+  /** La opción aparece haya habido sabotaje o no, para no regalar la respuesta. */
+  showPlayerDefenseWindow() {
+    this.busy = false;
+    this.selectable = false;
+    this.tableText.setText('Observa la tirada. Daku podría haber tocado un dado.');
+    this.setButtons([
+      {
+        label: `⚡ Defender tirada (${GameState.emp})`,
+        enabled: GameState.emp > 0,
+        onClick: () => this.defendPlayerRoll(),
+      },
+      {
+        label: '🥃 Beber',
+        enabled: GameState.sobriety > 0,
+        onClick: () => this.playerDrink('defense', () => this.showPlayerDefenseWindow()),
+      },
+      { label: 'Continuar', onClick: () => this.finishPlayerRoll() },
+    ]);
+  }
+
+  defendPlayerRoll() {
+    this.hideButtons();
+    if (!GameState.spendEmp()) return;
+    GameState.defensesMade++;
+    this.emp.pulse();
+
+    if (this.pendingPlayerCheat) {
+      const cheat = this.pendingPlayerCheat;
+      this.dice[cheat.dieIndex].cheatTo(cheat.from, 180);
+      GameState.cheatsCaught++;
+      GameState.successfulDefenses++;
+      Achievements.event('defend_correct');
+      GameState.restoreResources(0, 2);
+      this.dialogue.note('stage', 'Rein bloquea la telequinesis. El dado recupera su valor.');
+    } else {
+      GameState.falseDefenses++;
+      this.dialogue.note('stage', 'Rein levanta una barrera, pero Daku no había tocado nada.');
+    }
+    this.pendingPlayerCheat = null;
+    this.refreshHud();
+    if (GameState.emp === 0) Achievements.event('emp_zero');
+    this.time.delayedCall(700, () => this.finishPlayerRoll());
+  }
+
+  finishPlayerRoll() {
+    this.pendingPlayerCheat = null;
+    this.busy = false;
+    const values = this.currentValues();
+    if (!hasScoring(values)) { this.playerFarkle(); return; }
+    this.selectable = true;
+    this.updateSelectionUi();
+    this.setButtons([
+      { label: 'Apartar y tirar', enabled: false, onClick: () => this.playerKeep(true) },
+      { label: 'Apartar y plantarse', enabled: false, onClick: () => this.playerKeep(false) },
+      { label: '🥃 Beber', enabled: GameState.sobriety > 0, onClick: () => this.playerDrink('turn') },
+    ]);
   }
 
   playerKeep(rollAgain) {
@@ -759,11 +831,12 @@ export class FarkleScene extends Phaser.Scene {
     if (this.pendingCheat) {
       // Acierto: Daku pierde el turno.
       GameState.cheatsCaught++;
+      GameState.correctAccusations++;
       Achievements.event('accuse_correct', {
-        total: GameState.cheatsCaught, empBefore, sobriety: GameState.sobriety,
+        total: GameState.correctAccusations, empBefore, sobriety: GameState.sobriety,
         minimumSobriety: this.cfg.sobriety_loss_per_drink ?? .2,
       });
-      GameState.restoreResources(1, 2);
+      GameState.restoreResources(this.cfg.correct_accusation_emp_restore ?? 0, 2);
       this.ai.notifyCaught();
       this.pendingCheat = null;
       this.emp.pulse();
@@ -778,7 +851,7 @@ export class FarkleScene extends Phaser.Scene {
       GameState.falseAccusations++;
       Achievements.event('accuse_false', {
         total: GameState.falseAccusations, round: GameState.round, empAfter: GameState.emp,
-        correctTotal: GameState.cheatsCaught,
+        correctTotal: GameState.correctAccusations, otherEmpUses: GameState.defensesMade,
       });
       this.ai.notifyMissed();
       this.reinSkipsTurn = true;

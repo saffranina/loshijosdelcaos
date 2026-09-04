@@ -52,8 +52,12 @@ class State {
     // Registro de trampas (define los endings secretos)
     this.cheatsTotal = 0;
     this.cheatsCaught = 0;
+    this.correctAccusations = 0;
     this.accusationsMade = 0;
     this.falseAccusations = 0;
+    this.defensesMade = 0;
+    this.successfulDefenses = 0;
+    this.falseDefenses = 0;
 
     this.ending = null;
     this.prelude = null;
@@ -192,13 +196,13 @@ class State {
     const minCazadas = c.all_caught_min_cheats ?? 1;
     if (this.cheatsTotal >= minCazadas &&
         this.cheatsCaught === this.cheatsTotal &&
-        this.falseAccusations === 0) {
+        this.falseAccusations === 0 && this.falseDefenses === 0) {
       return 'all_caught';
     }
 
     // Daku hizo trampa varias veces y el jugador no dijo nada en toda la noche.
     const minCallado = c.none_caught_min_cheats ?? 3;
-    if (this.cheatsTotal >= minCallado && this.accusationsMade === 0) {
+    if (this.cheatsTotal >= minCallado && this.accusationsMade === 0 && this.defensesMade === 0) {
       return 'none_caught';
     }
 

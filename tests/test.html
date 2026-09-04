@@ -93,6 +93,27 @@
     check('describe tres 1s', describeSelection([1, 1, 1]), '3×1');
     check('describe escalera', describeSelection([1, 2, 3, 4, 5, 6]), 'Escalera');
 
+    // --- Pesadilla: sabotaje y coste de EMP ---
+    const { DakuAI } = await import('../src/systems/DakuAI.js');
+    const ai = new DakuAI({ ai_aggression: 0.9, cheat_probability: 0.5 });
+    const original = [1, 1, 1, 2, 3, 4];
+    const sabotage = ai.planSabotage(original);
+    const altered = original.slice();
+    if (sabotage) altered[sabotage.index] = sabotage.to;
+    check('sabotaje de Pesadilla encuentra un dado que perjudicar', !!sabotage, true);
+    check('sabotaje de Pesadilla reduce el valor de la tirada',
+      bestKeep(altered).score < bestKeep(original).score, true);
+
+    const { difficultyConfig } = await import('../src/systems/Mechanics.js');
+    const mechanics = await fetch('../src/data/mechanics-achievements.json').then((r) => r.json());
+    const baseConfig = await fetch('../src/data/farkle-config.json').then((r) => r.json());
+    check('solo Fácil devuelve EMP al acusar correctamente',
+      ['facil', 'normal', 'dificil', 'pesadilla'].map((key) =>
+        difficultyConfig(baseConfig, mechanics, key).correct_accusation_emp_restore), [1, 0, 0, 0]);
+    check('solo Pesadilla permite sabotear los dados de Rein',
+      ['facil', 'normal', 'dificil', 'pesadilla'].map((key) =>
+        difficultyConfig(baseConfig, mechanics, key).player_sabotage_enabled), [false, false, false, true]);
+
     // --- consistencia estadística de rollDice / hasScoring ---
     const { rollDice } = await import('../src/systems/FarkleLogic.js');
     let farkles = 0;
@@ -105,7 +126,7 @@
     // Es la regla que decide si Rein aparece vestido, sin camisa o en ropa
     // interior. La usan tanto la escena del Farkle como los endings.
     const { GameState } = await import('../src/systems/GameState.js');
-    const config = await fetch('../src/data/farkle-config.json').then((r) => r.json());
+    const config = baseConfig;
 
     GameState.reset(config);
     check('ropa: al empezar, Rein está vestido', GameState.clothingStage('rein'), 'clothed');

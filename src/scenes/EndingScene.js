@@ -66,8 +66,9 @@ export class EndingScene extends VNScene {
     const s = GameState;
     const stats = [
       `Rondas jugadas: ${s.round}`,
-      `Trampas de Daku: ${s.cheatsTotal}   ·   acusadas bien: ${s.cheatsCaught}`,
-      `Acusaciones falsas: ${s.falseAccusations}`,
+      `Trampas de Daku: ${s.cheatsTotal}   ·   detectadas: ${s.cheatsCaught}`,
+      `Acusaciones — correctas: ${s.correctAccusations}   ·   falsas: ${s.falseAccusations}`,
+      `Defensas — correctas: ${s.successfulDefenses}   ·   falsas: ${s.falseDefenses}`,
       `Tragos: ${s.drinks}   ·   sobriedad final: ${Math.round(s.sobriety * 100)}%`,
       `Rondas ganadas — Rein: ${s.reinRoundsWon}   ·   Daku: ${s.dakuRoundsWon}`,
       `Ropa — Rein: ${s.remaining('rein')}/3   ·   Daku: ${s.remaining('daku')}/3`,

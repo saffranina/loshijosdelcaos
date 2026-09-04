@@ -95,9 +95,10 @@ class AchievementTracker {
       if (data.total >= 3) this.unlock('paranoico');
       if (r.falseStreak >= 2) this.unlock('nunca_aprendes');
       if (data.round === 1) this.unlock('gatillo_facil');
-      if (data.empAfter === 0 && data.correctTotal === 0) this.unlock('desarmado');
+      if (data.empAfter === 0 && data.correctTotal === 0 && data.otherEmpUses === 0) this.unlock('desarmado');
     }
     if (type === 'emp_zero') this.unlock('sin_bateria');
+    if (type === 'defend_correct') this.unlock('escudo_mental');
     if (type === 'garment_lost' && data.who === 'rein' && data.round === 1) this.unlock('exhibicionista');
     if (type === 'round_won') {
       r.consecutiveRoundWins++;

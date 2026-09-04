@@ -108,11 +108,14 @@ function difficultyConfig(base, mechanics, key = 'normal') {
     starting_emp: d.emp_inicial,
     max_emp: d.emp_maximo,
     emp_per_drink: d.emp_por_trago,
+    correct_accusation_emp_restore: d.emp_al_acusar_correctamente ?? 0,
     starting_sobriety: d.sobriedad_inicial,
     sobriety_loss_per_drink: Math.abs(d.sobriedad_por_trago),
     ai_aggression: d.ia_agresividad,
     double_or_nothing: d.doble_o_nada || { habilitado: false },
     cheat_double_dice: !!d.trampa_dados_dobles,
+    player_sabotage_enabled: !!d.trampa_rein_habilitada,
+    player_sabotage_probability: d.trampa_rein_probabilidad ?? 0,
   };
 }
 
@@ -223,9 +226,10 @@ class AchievementTracker {
       if (data.total >= 3) this.unlock('paranoico');
       if (r.falseStreak >= 2) this.unlock('nunca_aprendes');
       if (data.round === 1) this.unlock('gatillo_facil');
-      if (data.empAfter === 0 && data.correctTotal === 0) this.unlock('desarmado');
+      if (data.empAfter === 0 && data.correctTotal === 0 && data.otherEmpUses === 0) this.unlock('desarmado');
     }
     if (type === 'emp_zero') this.unlock('sin_bateria');
+    if (type === 'defend_correct') this.unlock('escudo_mental');
     if (type === 'garment_lost' && data.who === 'rein' && data.round === 1) this.unlock('exhibicionista');
     if (type === 'round_won') {
       r.consecutiveRoundWins++;
@@ -355,8 +359,12 @@ class State {
     // Registro de trampas (define los endings secretos)
     this.cheatsTotal = 0;
     this.cheatsCaught = 0;
+    this.correctAccusations = 0;
     this.accusationsMade = 0;
     this.falseAccusations = 0;
+    this.defensesMade = 0;
+    this.successfulDefenses = 0;
+    this.falseDefenses = 0;
 
     this.ending = null;
     this.prelude = null;
@@ -495,13 +503,13 @@ class State {
     const minCazadas = c.all_caught_min_cheats ?? 1;
     if (this.cheatsTotal >= minCazadas &&
         this.cheatsCaught === this.cheatsTotal &&
-        this.falseAccusations === 0) {
+        this.falseAccusations === 0 && this.falseDefenses === 0) {
       return 'all_caught';
     }
 
     // Daku hizo trampa varias veces y el jugador no dijo nada en toda la noche.
     const minCallado = c.none_caught_min_cheats ?? 3;
-    if (this.cheatsTotal >= minCallado && this.accusationsMade === 0) {
+    if (this.cheatsTotal >= minCallado && this.accusationsMade === 0 && this.defensesMade === 0) {
       return 'none_caught';
     }
 
@@ -2629,6 +2637,28 @@ class DakuAI {
     return { index: pick.index, from: pick.from, to: pick.to, magnitude: pick.magnitude };
   }
 
+  /** En Pesadilla, busca el cambio que más perjudica la tirada de Rein. */
+  planSabotage(dice) {
+    const before = this._roughScore(dice);
+    if (before <= 0) return null;
+    const candidates = [];
+    for (let i = 0; i < dice.length; i++) {
+      for (let v = 1; v <= 6; v++) {
+        if (v === dice[i]) continue;
+        const after = dice.slice();
+        after[i] = v;
+        const loss = before - this._roughScore(after);
+        if (loss <= 0) continue;
+        candidates.push({
+          index:i, from:dice[i], to:v, loss,
+          visibility:Math.abs(v - dice[i]),
+        });
+      }
+    }
+    candidates.sort((a, b) => b.loss - a.loss || a.visibility - b.visibility);
+    return candidates[0] || null;
+  }
+
   /** Puntuación aproximada del tiro completo (solo para comparar opciones). */
   _roughScore(dice) {
     const keeps = validKeeps(dice);
@@ -3023,7 +3053,10 @@ class FarkleScene extends Phaser.Scene {
     this.turnPoints = 0;
     this.clearDice();
     this.turnsThisRound++;
-    if (who === 'rein') this.reinTurnsThisRound++;
+    if (who === 'rein') {
+      this.reinTurnsThisRound++;
+      this.playerSabotageChecked = false;
+    }
 
     if (this.turnsThisRound > MAX_TURNS_PER_ROUND) { this.endRound(); return; }
 
@@ -3168,17 +3201,86 @@ class FarkleScene extends Phaser.Scene {
     this.dialogue.note('stage', `Turno de Rein — ${this.turnPoints} en la mesa.`);
     this.portraits.rein.setExpression('dice');
 
-    this.rollFor('rein', (values) => {
-      this.busy = false;
-      if (!hasScoring(values)) { this.playerFarkle(); return; }
-      this.selectable = true;
-      this.updateSelectionUi();
-      this.setButtons([
-        { label: 'Apartar y tirar', enabled: false, onClick: () => this.playerKeep(true) },
-        { label: 'Apartar y plantarse', enabled: false, onClick: () => this.playerKeep(false) },
-        { label: '🥃 Beber', enabled: GameState.sobriety > 0, onClick: () => this.playerDrink('turn') },
-      ]);
-    });
+    this.rollFor('rein', () => this.maybeSabotagePlayerRoll());
+  }
+
+  /** En Pesadilla, Daku tiene una oportunidad de tocar la primera tirada del turno de Rein. */
+  maybeSabotagePlayerRoll() {
+    if (!this.cfg.player_sabotage_enabled || this.playerSabotageChecked) {
+      this.finishPlayerRoll();
+      return;
+    }
+    this.playerSabotageChecked = true;
+    this.pendingPlayerCheat = null;
+
+    if (Math.random() < (this.cfg.player_sabotage_probability ?? 0)) {
+      const plan = this.ai.planSabotage(this.currentValues());
+      if (plan) {
+        const dieIndex = this.active[plan.index];
+        this.pendingPlayerCheat = { dieIndex, ...plan };
+        GameState.cheatsTotal++;
+        this.dice[dieIndex].cheatTo(plan.to, this.ai.cheatFlashMs(GameState.drunkenness));
+      }
+    }
+    this.showPlayerDefenseWindow();
+  }
+
+  /** La opción aparece haya habido sabotaje o no, para no regalar la respuesta. */
+  showPlayerDefenseWindow() {
+    this.busy = false;
+    this.selectable = false;
+    this.tableText.setText('Observa la tirada. Daku podría haber tocado un dado.');
+    this.setButtons([
+      {
+        label: `⚡ Defender tirada (${GameState.emp})`,
+        enabled: GameState.emp > 0,
+        onClick: () => this.defendPlayerRoll(),
+      },
+      {
+        label: '🥃 Beber',
+        enabled: GameState.sobriety > 0,
+        onClick: () => this.playerDrink('defense', () => this.showPlayerDefenseWindow()),
+      },
+      { label: 'Continuar', onClick: () => this.finishPlayerRoll() },
+    ]);
+  }
+
+  defendPlayerRoll() {
+    this.hideButtons();
+    if (!GameState.spendEmp()) return;
+    GameState.defensesMade++;
+    this.emp.pulse();
+
+    if (this.pendingPlayerCheat) {
+      const cheat = this.pendingPlayerCheat;
+      this.dice[cheat.dieIndex].cheatTo(cheat.from, 180);
+      GameState.cheatsCaught++;
+      GameState.successfulDefenses++;
+      Achievements.event('defend_correct');
+      GameState.restoreResources(0, 2);
+      this.dialogue.note('stage', 'Rein bloquea la telequinesis. El dado recupera su valor.');
+    } else {
+      GameState.falseDefenses++;
+      this.dialogue.note('stage', 'Rein levanta una barrera, pero Daku no había tocado nada.');
+    }
+    this.pendingPlayerCheat = null;
+    this.refreshHud();
+    if (GameState.emp === 0) Achievements.event('emp_zero');
+    this.time.delayedCall(700, () => this.finishPlayerRoll());
+  }
+
+  finishPlayerRoll() {
+    this.pendingPlayerCheat = null;
+    this.busy = false;
+    const values = this.currentValues();
+    if (!hasScoring(values)) { this.playerFarkle(); return; }
+    this.selectable = true;
+    this.updateSelectionUi();
+    this.setButtons([
+      { label: 'Apartar y tirar', enabled: false, onClick: () => this.playerKeep(true) },
+      { label: 'Apartar y plantarse', enabled: false, onClick: () => this.playerKeep(false) },
+      { label: '🥃 Beber', enabled: GameState.sobriety > 0, onClick: () => this.playerDrink('turn') },
+    ]);
   }
 
   playerKeep(rollAgain) {
@@ -3418,11 +3520,12 @@ class FarkleScene extends Phaser.Scene {
     if (this.pendingCheat) {
       // Acierto: Daku pierde el turno.
       GameState.cheatsCaught++;
+      GameState.correctAccusations++;
       Achievements.event('accuse_correct', {
-        total: GameState.cheatsCaught, empBefore, sobriety: GameState.sobriety,
+        total: GameState.correctAccusations, empBefore, sobriety: GameState.sobriety,
         minimumSobriety: this.cfg.sobriety_loss_per_drink ?? .2,
       });
-      GameState.restoreResources(1, 2);
+      GameState.restoreResources(this.cfg.correct_accusation_emp_restore ?? 0, 2);
       this.ai.notifyCaught();
       this.pendingCheat = null;
       this.emp.pulse();
@@ -3437,7 +3540,7 @@ class FarkleScene extends Phaser.Scene {
       GameState.falseAccusations++;
       Achievements.event('accuse_false', {
         total: GameState.falseAccusations, round: GameState.round, empAfter: GameState.emp,
-        correctTotal: GameState.cheatsCaught,
+        correctTotal: GameState.correctAccusations, otherEmpUses: GameState.defensesMade,
       });
       this.ai.notifyMissed();
       this.reinSkipsTurn = true;
@@ -3653,8 +3756,9 @@ class EndingScene extends VNScene {
     const s = GameState;
     const stats = [
       `Rondas jugadas: ${s.round}`,
-      `Trampas de Daku: ${s.cheatsTotal}   ·   acusadas bien: ${s.cheatsCaught}`,
-      `Acusaciones falsas: ${s.falseAccusations}`,
+      `Trampas de Daku: ${s.cheatsTotal}   ·   detectadas: ${s.cheatsCaught}`,
+      `Acusaciones — correctas: ${s.correctAccusations}   ·   falsas: ${s.falseAccusations}`,
+      `Defensas — correctas: ${s.successfulDefenses}   ·   falsas: ${s.falseDefenses}`,
       `Tragos: ${s.drinks}   ·   sobriedad final: ${Math.round(s.sobriety * 100)}%`,
       `Rondas ganadas — Rein: ${s.reinRoundsWon}   ·   Daku: ${s.dakuRoundsWon}`,
       `Ropa — Rein: ${s.remaining('rein')}/3   ·   Daku: ${s.remaining('daku')}/3`,
@@ -3717,6 +3821,7 @@ const CONDITION_TEXT = {
   todo_emp_en_acusaciones_falsas: 'Gasta todo tu EMP únicamente en acusaciones falsas.',
   terminar_sin_acusar: 'Termina una partida sin acusar a Daku.',
   llegar_a_0_emp: 'Quédate sin EMP.',
+  defender_tirada_saboteada: 'Usa EMP para restaurar un dado que Daku alteró en tu tirada.',
   ganar_sin_beber: 'Gana una partida sin beber.',
   beber_3_veces: 'Bebe tres veces en una partida.',
   beber_en_todas_las_rondas: 'Bebe al menos una vez en cada ronda.',
