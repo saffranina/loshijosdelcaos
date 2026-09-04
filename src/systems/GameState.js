@@ -72,6 +72,15 @@ class State {
     Achievements.beginRun(this.selectedDifficulty);
   }
 
+  /** Aplica la dificultad elegida al terminar el tutorial sin perder la rama narrativa. */
+  prepareFarkle() {
+    const esryBranch = this.esryBranch;
+    this.setDifficulty(this.selectedDifficulty);
+    this.reset(this.config);
+    this.esryBranch = esryBranch;
+    Achievements.beginRun(this.selectedDifficulty);
+  }
+
   // ---- ropa ----
   remaining(who) {
     return GARMENTS.length - (who === 'rein' ? this.reinLost : this.dakuLost);

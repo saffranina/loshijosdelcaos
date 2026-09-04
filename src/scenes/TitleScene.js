@@ -4,7 +4,6 @@ import { C, F } from '../theme.js';
 import { makeButton, paintBackdrop } from '../systems/Ui.js';
 import { GameState } from '../systems/GameState.js';
 import { playMusic } from '../systems/Music.js';
-import { DIFFICULTY_ORDER, difficultyLabel } from '../systems/Mechanics.js';
 
 export class TitleScene extends Phaser.Scene {
   constructor() { super('Title'); }
@@ -46,23 +45,11 @@ export class TitleScene extends Phaser.Scene {
       this.scene.start('Tutorial', { next: 'Farkle' });
     }, { fontSize: 14 });
 
-    let description;
-    const difficultyButton = makeButton(this, 310, height * 0.75, 210, 34, '', () => {
-      const i = DIFFICULTY_ORDER.indexOf(GameState.selectedDifficulty);
-      GameState.setDifficulty(DIFFICULTY_ORDER[(i + 1) % DIFFICULTY_ORDER.length]);
-      difficultyButton.setLabel(`Dificultad: ${GameState.mechanics.dificultades[GameState.selectedDifficulty].nombre}`);
-      description.setText(difficultyLabel(GameState.mechanics, GameState.selectedDifficulty));
-    }, { fontSize: 13 });
-    difficultyButton.setLabel(`Dificultad: ${GameState.mechanics.dificultades[GameState.selectedDifficulty].nombre}`);
-    makeButton(this, 490, height * 0.75, 130, 34, 'Logros', () => {
+    makeButton(this, width / 2, height * 0.75, 230, 34, 'Logros', () => {
       this.scene.start('Achievements');
     }, { fontSize: 13 });
-    description = this.add.text(width / 2, height * 0.79,
-      difficultyLabel(GameState.mechanics, GameState.selectedDifficulty), {
-        fontFamily: F.body, fontSize: '12px', color: C.textDim,
-      }).setOrigin(0.5);
 
-    makeButton(this, width / 2, height * 0.86, 230, 34, 'Cómo jugar', () => {
+    makeButton(this, width / 2, height * 0.83, 230, 34, 'Cómo jugar', () => {
       this.scene.start('Tutorial', { next: 'Title' });
     }, { fontSize: 13 });
   }

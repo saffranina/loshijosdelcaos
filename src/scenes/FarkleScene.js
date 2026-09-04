@@ -112,7 +112,7 @@ export class FarkleScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(80).setAlpha(0);
 
     this.turnPointsText = this.add.text(width / 2, 40, '', {
-      fontFamily: F.body, fontSize: '13px', color: C.lamp,
+      fontFamily: F.body, fontSize: '13px', color: '#ffffff',
     }).setOrigin(0.5, 0).setDepth(60);
 
     this.emp = new EMPSystem(this, 24, 38);

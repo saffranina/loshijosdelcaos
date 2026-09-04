@@ -375,6 +375,15 @@ class State {
     Achievements.beginRun(this.selectedDifficulty);
   }
 
+  /** Aplica la dificultad elegida al terminar el tutorial sin perder la rama narrativa. */
+  prepareFarkle() {
+    const esryBranch = this.esryBranch;
+    this.setDifficulty(this.selectedDifficulty);
+    this.reset(this.config);
+    this.esryBranch = esryBranch;
+    Achievements.beginRun(this.selectedDifficulty);
+  }
+
   // ---- ropa ----
   remaining(who) {
     return GARMENTS.length - (who === 'rein' ? this.reinLost : this.dakuLost);
@@ -846,8 +855,6 @@ var makeButton = __M["src/systems/Ui.js"].makeButton;
 var paintBackdrop = __M["src/systems/Ui.js"].paintBackdrop;
 var GameState = __M["src/systems/GameState.js"].GameState;
 var playMusic = __M["src/systems/Music.js"].playMusic;
-var DIFFICULTY_ORDER = __M["src/systems/Mechanics.js"].DIFFICULTY_ORDER;
-var difficultyLabel = __M["src/systems/Mechanics.js"].difficultyLabel;
 // TitleScene.js — pantalla de título.
 
 
@@ -891,23 +898,11 @@ class TitleScene extends Phaser.Scene {
       this.scene.start('Tutorial', { next: 'Farkle' });
     }, { fontSize: 14 });
 
-    let description;
-    const difficultyButton = makeButton(this, 310, height * 0.75, 210, 34, '', () => {
-      const i = DIFFICULTY_ORDER.indexOf(GameState.selectedDifficulty);
-      GameState.setDifficulty(DIFFICULTY_ORDER[(i + 1) % DIFFICULTY_ORDER.length]);
-      difficultyButton.setLabel(`Dificultad: ${GameState.mechanics.dificultades[GameState.selectedDifficulty].nombre}`);
-      description.setText(difficultyLabel(GameState.mechanics, GameState.selectedDifficulty));
-    }, { fontSize: 13 });
-    difficultyButton.setLabel(`Dificultad: ${GameState.mechanics.dificultades[GameState.selectedDifficulty].nombre}`);
-    makeButton(this, 490, height * 0.75, 130, 34, 'Logros', () => {
+    makeButton(this, width / 2, height * 0.75, 230, 34, 'Logros', () => {
       this.scene.start('Achievements');
     }, { fontSize: 13 });
-    description = this.add.text(width / 2, height * 0.79,
-      difficultyLabel(GameState.mechanics, GameState.selectedDifficulty), {
-        fontFamily: F.body, fontSize: '12px', color: C.textDim,
-      }).setOrigin(0.5);
 
-    makeButton(this, width / 2, height * 0.86, 230, 34, 'Cómo jugar', () => {
+    makeButton(this, width / 2, height * 0.83, 230, 34, 'Cómo jugar', () => {
       this.scene.start('Tutorial', { next: 'Title' });
     }, { fontSize: 13 });
   }
@@ -1734,6 +1729,8 @@ var F = __M["src/theme.js"].F;
 var makeButton = __M["src/systems/Ui.js"].makeButton;
 var paintBackdrop = __M["src/systems/Ui.js"].paintBackdrop;
 var panel = __M["src/systems/Ui.js"].panel;
+var GameState = __M["src/systems/GameState.js"].GameState;
+var DIFFICULTY_ORDER = __M["src/systems/Mechanics.js"].DIFFICULTY_ORDER;
 
 const PAGES = [
   {
@@ -1765,6 +1762,12 @@ const PAGES = [
   },
 ];
 
+const DIFFICULTY_PAGE = {
+  title: '7 · Elige la dificultad',
+  body: '',
+  visual: 'difficulty',
+};
+
 class TutorialScene extends Phaser.Scene {
   constructor() { super('Tutorial'); }
 
@@ -1780,6 +1783,8 @@ class TutorialScene extends Phaser.Scene {
   init(data) {
     this.nextScene = data?.next || 'Farkle';
     this.volverA = data?.volverA || null;
+    this.chooseDifficulty = !this.volverA && this.nextScene === 'Farkle';
+    this.pages = this.chooseDifficulty ? [...PAGES, DIFFICULTY_PAGE] : PAGES;
   }
 
   /** Cierra la consulta y devuelve el control a la partida. */
@@ -1826,9 +1831,12 @@ class TutorialScene extends Phaser.Scene {
       this.page = Math.max(0, this.page - 1); this.renderPage();
     });
     this.next = makeButton(this, 545, 510, 190, 40, 'Siguiente', () => {
-      if (this.page < PAGES.length - 1) { this.page++; this.renderPage(); }
+      if (this.page < this.pages.length - 1) { this.page++; this.renderPage(); }
       else if (this.volverA) this.cerrar();
-      else this.scene.start(this.nextScene);
+      else {
+        if (this.chooseDifficulty) GameState.prepareFarkle();
+        this.scene.start(this.nextScene);
+      }
     });
 
     // Abierto desde la partida se puede cerrar en cualquier página, sin tener
@@ -1866,7 +1874,8 @@ class TutorialScene extends Phaser.Scene {
   }
 
   renderVisual(kind) {
-    if (!this.textures.exists('dice_sheet')) return;
+    const { width } = this.scale;
+    if (kind !== 'difficulty' && !this.textures.exists('dice_sheet')) return;
     if (kind === 'singles') {
       // Debajo de donde el texto termine DE VERDAD, no en una altura fija:
       // si la primera frase pasa a dos líneas (depende de la tipografía que
@@ -1898,19 +1907,43 @@ class TutorialScene extends Phaser.Scene {
       this.diceRow([1, 1, 3, 3, 5, 5], 280, '= 1500 · tres parejas');
       this.diceRow([2, 2, 2, 6, 6, 6], 320, '= 2500 · dos tríos');
       this.diceRow([4, 4, 4, 4, 2, 2], 360, '= 1500 · cuatro + pareja');
+    } else if (kind === 'difficulty') {
+      DIFFICULTY_ORDER.forEach((key, i) => {
+        const d = GameState.mechanics.dificultades[key];
+        const x = i % 2 === 0 ? 250 : 550;
+        const y = i < 2 ? 205 : 270;
+        const button = makeButton(this, x, y, 240, 42, d.nombre, () => {
+          GameState.selectedDifficulty = key;
+          this.renderPage();
+        }, { fontSize: 15 });
+        if (GameState.selectedDifficulty === key) {
+          button.el.style.borderColor = '#ffd24a';
+          button.el.style.color = '#fff4c7';
+          button.el.style.background = '#2b4054';
+        }
+        this.visualItems.push(button);
+      });
+      const selected = GameState.mechanics.dificultades[GameState.selectedDifficulty];
+      const description = this.add.text(width / 2, 335,
+        `${selected.nombre}\n${selected.descripcion}`, {
+          fontFamily: F.body, fontSize: '17px', color: '#f4f7fa',
+          align: 'center', lineSpacing: 7,
+        }).setOrigin(0.5, 0).setDepth(5);
+      this.visualItems.push(description);
     }
   }
 
   renderPage() {
     this.clearVisuals();
-    const p = PAGES[this.page];
+    const p = this.pages[this.page];
     this.titleText.setText(p.title);
     this.bodyText.setText(p.body);
-    this.pageText.setText(`${this.page + 1} / ${PAGES.length}`);
+    this.pageText.setText(`${this.page + 1} / ${this.pages.length}`);
     this.back.setEnabled(this.page > 0);
     this.next.setLabel(
-      this.page < PAGES.length - 1 ? 'Siguiente'
-        : this.volverA ? 'Volver a la partida' : 'Empezar partida');
+      this.page < this.pages.length - 1 ? (this.chooseDifficulty && this.page === PAGES.length - 1 ? 'Elegir dificultad' : 'Siguiente')
+        : this.volverA ? 'Volver a la partida'
+          : this.nextScene === 'Title' ? 'Volver al título' : 'Empezar partida');
     this.renderVisual(p.visual);
   }
 }
@@ -2738,7 +2771,7 @@ class FarkleScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(80).setAlpha(0);
 
     this.turnPointsText = this.add.text(width / 2, 40, '', {
-      fontFamily: F.body, fontSize: '13px', color: C.lamp,
+      fontFamily: F.body, fontSize: '13px', color: '#ffffff',
     }).setOrigin(0.5, 0).setDepth(60);
 
     this.emp = new EMPSystem(this, 24, 38);
@@ -3651,6 +3684,66 @@ var panel = __M["src/systems/Ui.js"].panel;
 var makeButton = __M["src/systems/Ui.js"].makeButton;
 var Achievements = __M["src/systems/Achievements.js"].Achievements;
 
+const CONDITION_TEXT = {
+  rein_wins: 'Gana una partida con Rein.',
+  daku_wins: 'Pierde una partida contra Daku.',
+  all_caught_prelude: 'Descubre todas las trampas de Daku sin acusarlo en falso.',
+  none_caught_prelude: 'Deja pasar todas las trampas de Daku sin hacer ninguna acusación.',
+  game_over_alcohol: 'Pierde toda la sobriedad por beber.',
+  sacar_escalera_1_6: 'Aparta una escalera completa del 1 al 6.',
+  puntuar_6_dados_y_seguir: 'Puntúa con los seis dados y vuelve a tirar.',
+  puntuar_6_dados_un_tiro: 'Aparta los seis dados puntuables en una sola tirada.',
+  farkle_con_mas_de_1000_acumulados: 'Haz Farkle con más de 1000 puntos acumulados en el turno.',
+  plantarse_con_menos_de_200: 'Plántate con menos de 200 puntos.',
+  seguir_tirando_con_mas_de_1500: 'Vuelve a tirar con más de 1500 puntos en riesgo.',
+  tres_triples_en_partida: 'Consigue tres tríos durante una misma partida.',
+  ganar_ronda_solo_1s_y_5s: 'Gana una ronda puntuando únicamente con unos y cincos.',
+  ganar_sin_perder_prenda: 'Gana la partida sin perder ninguna prenda.',
+  ganar_con_2_prendas_perdidas: 'Gana después de perder dos prendas.',
+  perder_prenda_ronda_1: 'Pierde una prenda en la primera ronda.',
+  terminar_en_3_rondas: 'Termina la partida en exactamente tres rondas.',
+  ganar_ronda_un_solo_tiro: 'Gana una ronda con una sola tirada de dados.',
+  ganar_3_rondas_seguidas: 'Gana tres rondas consecutivas.',
+  ganar_ronda_doble_o_nada: 'Gana una ronda de doble o nada.',
+  perder_ronda_doble_o_nada: 'Pierde una ronda de doble o nada.',
+  proponer_doble_o_nada_3_veces: 'Haz que Rein proponga doble o nada tres veces.',
+  daku_propone_doble_o_nada_y_gana: 'Acepta la propuesta de Daku y deja que gane la ronda.',
+  primera_acusacion_correcta: 'Acusa correctamente a Daku por primera vez.',
+  '3_acusaciones_correctas_en_partida': 'Haz tres acusaciones correctas en una partida.',
+  acusar_correctamente_con_1_emp: 'Acusa correctamente cuando solo te queda 1 EMP.',
+  '3_acusaciones_falsas_en_partida': 'Haz tres acusaciones falsas en una partida.',
+  acusar_sin_trampa_ronda_1: 'Acusa en falso durante la primera ronda.',
+  '2_acusaciones_falsas_seguidas': 'Haz dos acusaciones falsas consecutivas.',
+  todo_emp_en_acusaciones_falsas: 'Gasta todo tu EMP únicamente en acusaciones falsas.',
+  terminar_sin_acusar: 'Termina una partida sin acusar a Daku.',
+  llegar_a_0_emp: 'Quédate sin EMP.',
+  ganar_sin_beber: 'Gana una partida sin beber.',
+  beber_3_veces: 'Bebe tres veces en una partida.',
+  beber_en_todas_las_rondas: 'Bebe al menos una vez en cada ronda.',
+  beber_antes_de_ronda_final: 'Bebe cuando la siguiente prenda puede decidir la partida.',
+  ganar_con_sobriedad_1: 'Gana con un solo nivel de sobriedad restante.',
+  acusar_correctamente_sobriedad_minima: 'Descubre una trampa con la sobriedad al mínimo.',
+  ganar_con_sobriedad_minima: 'Gana la partida con la sobriedad al mínimo.',
+  siempre_estoico: 'Elige siempre respuestas estoicas durante la partida.',
+  siempre_coquetear: 'Elige siempre coquetear durante la partida.',
+  siempre_provocar: 'Elige siempre provocar durante la partida.',
+  usar_3_tonos_en_partida: 'Usa provocar, coquetear y estoico en una misma partida.',
+  nunca_coquetear: 'Termina una partida sin coquetear.',
+  coquetear_en_ropa_interior: 'Coquetea cuando alguno esté en ropa interior.',
+  jugar_5_partidas: 'Completa cinco partidas.',
+  jugar_10_partidas: 'Completa diez partidas.',
+  jugar_25_partidas: 'Completa veinticinco partidas.',
+  ver_ambos_endings_principales: 'Mira los finales principales de victoria y derrota.',
+  activar_ambos_preludios: 'Activa los dos preludios secretos.',
+  ver_ambos_endings_ambos_preludios_y_game_over: 'Mira ambos finales, ambos preludios y el game over por alcohol.',
+  desbloquear_todos_los_logros: 'Desbloquea todos los demás logros.',
+  ganar_en_facil: 'Gana una partida en Noche tranquila.',
+  ganar_en_normal: 'Gana una partida en La Estrella de Mar.',
+  ganar_en_dificil: 'Gana una partida en Reglas de Petri.',
+  ganar_en_pesadilla: 'Gana una partida en Último dado.',
+  perder_pesadilla_sin_ganar_ronda: 'Pierde en Último dado sin ganar ninguna ronda.',
+};
+
 class AchievementsScene extends Phaser.Scene {
   constructor() { super('Achievements'); }
 
@@ -3670,6 +3763,11 @@ class AchievementsScene extends Phaser.Scene {
     this.add.text(width / 2, 74, `${unlocked} / ${entries.length} desbloqueados`, {
       fontFamily:F.body, fontSize:'14px', color:C.textDim,
     }).setOrigin(.5, 0);
+    const defaultHint = 'Pasa el cursor sobre un logro desbloqueado para ver cómo se consiguió.';
+    this.hint = this.add.text(width / 2, 455, defaultHint, {
+      fontFamily:F.body, fontSize:'13px', color:'#cbd7e2', align:'center',
+      wordWrap:{ width:620 },
+    }).setOrigin(.5).setDepth(10);
 
     const categories = [...new Set(entries.map((x) => x.category))];
     this.page = 0;
@@ -3683,8 +3781,16 @@ class AchievementsScene extends Phaser.Scene {
       list.forEach((a, i) => {
         const visibleName = a.unlocked || !a.oculto ? a.nombre : '???';
         const mark = a.unlocked ? '◆' : '◇';
-        this.items.push(this.add.text(90 + (i % 2) * 350, 145 + Math.floor(i / 2) * 42,
-          `${mark} ${visibleName}`, { fontFamily:F.body, fontSize:'15px', color:a.unlocked?'#f4f7fa':'#71859a' }));
+        const item = this.add.text(90 + (i % 2) * 350, 145 + Math.floor(i / 2) * 42,
+          `${mark} ${visibleName}`, { fontFamily:F.body, fontSize:'15px', color:a.unlocked?'#f4f7fa':'#71859a' });
+        if (a.unlocked) {
+          const show = () => this.hint.setText(CONDITION_TEXT[a.condicion] || a.condicion.replaceAll('_', ' '));
+          item.setInteractive({ useHandCursor:true });
+          item.on('pointerover', show);
+          item.on('pointerdown', show);
+          item.on('pointerout', () => this.hint.setText(defaultHint));
+        }
+        this.items.push(item);
       });
       this.pageLabel.setText(`${this.page + 1} / ${categories.length}`);
     };

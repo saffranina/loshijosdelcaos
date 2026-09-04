@@ -1,5 +1,7 @@
 import { C, F } from '../theme.js';
 import { makeButton, paintBackdrop, panel } from '../systems/Ui.js';
+import { GameState } from '../systems/GameState.js';
+import { DIFFICULTY_ORDER } from '../systems/Mechanics.js';
 
 const PAGES = [
   {
@@ -31,6 +33,12 @@ const PAGES = [
   },
 ];
 
+const DIFFICULTY_PAGE = {
+  title: '7 · Elige la dificultad',
+  body: '',
+  visual: 'difficulty',
+};
+
 export class TutorialScene extends Phaser.Scene {
   constructor() { super('Tutorial'); }
 
@@ -46,6 +54,8 @@ export class TutorialScene extends Phaser.Scene {
   init(data) {
     this.nextScene = data?.next || 'Farkle';
     this.volverA = data?.volverA || null;
+    this.chooseDifficulty = !this.volverA && this.nextScene === 'Farkle';
+    this.pages = this.chooseDifficulty ? [...PAGES, DIFFICULTY_PAGE] : PAGES;
   }
 
   /** Cierra la consulta y devuelve el control a la partida. */
@@ -92,9 +102,12 @@ export class TutorialScene extends Phaser.Scene {
       this.page = Math.max(0, this.page - 1); this.renderPage();
     });
     this.next = makeButton(this, 545, 510, 190, 40, 'Siguiente', () => {
-      if (this.page < PAGES.length - 1) { this.page++; this.renderPage(); }
+      if (this.page < this.pages.length - 1) { this.page++; this.renderPage(); }
       else if (this.volverA) this.cerrar();
-      else this.scene.start(this.nextScene);
+      else {
+        if (this.chooseDifficulty) GameState.prepareFarkle();
+        this.scene.start(this.nextScene);
+      }
     });
 
     // Abierto desde la partida se puede cerrar en cualquier página, sin tener
@@ -132,7 +145,8 @@ export class TutorialScene extends Phaser.Scene {
   }
 
   renderVisual(kind) {
-    if (!this.textures.exists('dice_sheet')) return;
+    const { width } = this.scale;
+    if (kind !== 'difficulty' && !this.textures.exists('dice_sheet')) return;
     if (kind === 'singles') {
       // Debajo de donde el texto termine DE VERDAD, no en una altura fija:
       // si la primera frase pasa a dos líneas (depende de la tipografía que
@@ -164,19 +178,43 @@ export class TutorialScene extends Phaser.Scene {
       this.diceRow([1, 1, 3, 3, 5, 5], 280, '= 1500 · tres parejas');
       this.diceRow([2, 2, 2, 6, 6, 6], 320, '= 2500 · dos tríos');
       this.diceRow([4, 4, 4, 4, 2, 2], 360, '= 1500 · cuatro + pareja');
+    } else if (kind === 'difficulty') {
+      DIFFICULTY_ORDER.forEach((key, i) => {
+        const d = GameState.mechanics.dificultades[key];
+        const x = i % 2 === 0 ? 250 : 550;
+        const y = i < 2 ? 205 : 270;
+        const button = makeButton(this, x, y, 240, 42, d.nombre, () => {
+          GameState.selectedDifficulty = key;
+          this.renderPage();
+        }, { fontSize: 15 });
+        if (GameState.selectedDifficulty === key) {
+          button.el.style.borderColor = '#ffd24a';
+          button.el.style.color = '#fff4c7';
+          button.el.style.background = '#2b4054';
+        }
+        this.visualItems.push(button);
+      });
+      const selected = GameState.mechanics.dificultades[GameState.selectedDifficulty];
+      const description = this.add.text(width / 2, 335,
+        `${selected.nombre}\n${selected.descripcion}`, {
+          fontFamily: F.body, fontSize: '17px', color: '#f4f7fa',
+          align: 'center', lineSpacing: 7,
+        }).setOrigin(0.5, 0).setDepth(5);
+      this.visualItems.push(description);
     }
   }
 
   renderPage() {
     this.clearVisuals();
-    const p = PAGES[this.page];
+    const p = this.pages[this.page];
     this.titleText.setText(p.title);
     this.bodyText.setText(p.body);
-    this.pageText.setText(`${this.page + 1} / ${PAGES.length}`);
+    this.pageText.setText(`${this.page + 1} / ${this.pages.length}`);
     this.back.setEnabled(this.page > 0);
     this.next.setLabel(
-      this.page < PAGES.length - 1 ? 'Siguiente'
-        : this.volverA ? 'Volver a la partida' : 'Empezar partida');
+      this.page < this.pages.length - 1 ? (this.chooseDifficulty && this.page === PAGES.length - 1 ? 'Elegir dificultad' : 'Siguiente')
+        : this.volverA ? 'Volver a la partida'
+          : this.nextScene === 'Title' ? 'Volver al título' : 'Empezar partida');
     this.renderVisual(p.visual);
   }
 }
